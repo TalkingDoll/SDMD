@@ -1,0 +1,662 @@
+\documentclass{article}[11]
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{hyperref}
+% Define theorem environments
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem*{remark}{Remark}
+\newtheorem{assumption}{Assumption}
+
+\allowdisplaybreaks
+
+
+\title{Stochastic system consideration for EDMD}
+% \date{}
+\author{Yuanchao Xu}
+\begin{document}
+
+\maketitle
+
+\section{Notation introduction}
+A list of all the notation and relevant definition:
+\begin{enumerate}
+	\item (Autonomous) SDE in the dynamical system $(\Omega, \mu)$:
+	$$dX_t = b(X_t)dt + \sigma(X_t)dW_t$$
+	
+	\item $\Phi^{t}$: Transformation map/flow
+	
+	\item $\Psi = \{\psi_i\}_{i=1}^N$: Dictionary or set of basis functions \\
+	Each $\psi_i \in \mathcal{F}\coloneqq L^2(\Omega, \mu)$
+	
+	\item $\mathcal{P}_{N}$: Projection onto the subspace $\mathcal{F}_N \coloneqq \text{span}\{\psi_1. \dots, \psi_N\}\subset\mathcal{F}$
+	
+	\item $\mathcal{P}_{\mathcal{D}_N}$: Projection of $\mathcal{D}$ onto $\mathcal{F}_N$ using the inner product on $\mathcal{D}$
+	
+	
+	\item $m$: Number of (i.i.d.) data points
+	
+	\item $N$: Dictionary size
+	
+	\item $n,t=\frac{1}{n}$: sampling frequency and time step between two data snapshots
+	
+	\item Data(i.i.d.) snapshots:
+	\[
+	X = \begin{bmatrix} 
+		\underset{\rule{0.1mm}{5mm}}{\overset{\rule{0.1mm}{5mm}}{x_1}} & \cdots & \underset{\rule{0.1mm}{5mm}}{\overset{\rule{0.1mm}{5mm}}{x_m}}
+	\end{bmatrix}
+	, \quad
+	Y = \begin{bmatrix} 
+		\underset{\rule{0.1mm}{5mm}}{\overset{\rule{0.1mm}{5mm}}{y_1}} & \cdots & \underset{\rule{0.1mm}{5mm}}{\overset{\rule{0.1mm}{5mm}}{y_m}}
+	\end{bmatrix}
+	\]	
+	
+	\item (Row)Vector of basis functions:
+	$$
+	\mathbf{\Psi}_N(x) \coloneqq \left[\psi_1(x), \dots, \psi_N(x)\right]
+	$$
+	
+	\item Matrices of dictionary $\{\psi_j\}_{j=1}^N$ evaluated on data $\{x_i, y_i\}_{i=1}^m$:
+	\begin{gather*}
+		\Psi_X = \begin{bmatrix}
+			\rule{0.8cm}{0.1mm} & \mathbf{\Psi}_N(x_1) & \rule{0.8cm}{0.1mm} \\
+			& \vdots &   \\
+			\rule{0.8cm}{0.1mm} & \mathbf{\Psi}_N(x_m) & \rule{0.8cm}{0.1mm}
+		\end{bmatrix}
+		=\begin{bmatrix}
+			\psi_1(x_1) & \cdots & \psi_{N}(x_1) \\
+			\vdots & \ddots & \vdots \\
+			\psi_1(x_m) & \cdots & \psi_{N}(x_m)
+		\end{bmatrix} \\
+		\Psi_Y = \begin{bmatrix}
+			\rule{0.8cm}{0.1mm} & \mathbf{\Psi}_N(y_1) & \rule{0.8cm}{0.1mm} \\
+			& \vdots &   \\
+			\rule{0.8cm}{0.1mm} & \mathbf{\Psi}_N(y_m) & \rule{0.8cm}{0.1mm}
+		\end{bmatrix}
+		= \begin{bmatrix}
+			\psi_1(y_1) & \cdots & \psi_{N}(y_1) \\
+			\vdots & \ddots & \vdots \\
+			\psi_1(y_m) & \cdots & \psi_{N}(y_m)
+		\end{bmatrix}
+	\end{gather*}
+		
+	\item Definition of Koopman operator in deterministic system:
+	$$\mathcal{K}f = f\circ\Phi$$
+	Definition of stochastic Koopman operator(\textbf{semigroup}):
+	$$\mathcal{K}^{t}f = \mathbb{E}[f\circ\Phi^{t}]$$
+	Remark: In the deterministic system, we can still use $\mathcal{K}^t,\Phi^t$ where $t$ is the (fixed) time interval between two sampling snapshots.
+	\item Definition of Koopman generator:
+	\begin{gather}\label{def_generator}
+		\begin{aligned}
+			\mathcal{L}f(x) &\coloneqq \lim_{t \to 0} \frac{[\mathcal{K}^{t}f(x)] - f(x)}{t} \\
+			&= \lim_{t \to 0} \frac{\mathbb{E}[f\circ\Phi^{t}(x)] - f(x)}{t}
+		\end{aligned}
+	\end{gather}
+	
+\end{enumerate}
+
+\subsection*{EDMD framework review}
+Let $f(x) = \mathbf{\Psi}_N(x)a$. Then 
+$$\mathcal{K} f(x) = f(y) = \mathbf{\Psi}_N(y)a = \mathbf{\Psi}_N(x)K a + r(x)$$
+where $r(x)$ is the residual. Notice that the span of $\{ \psi_1, \dots, \psi_N \}$ is not necessarily invariant under $\mathcal{K}$.
+
+In the EDMD framework, given a dataset $\{(x_i,y_i)\}_{i=1}^M$, we want to minimize the residual over the finite data set:
+$$J \coloneqq \sum_{i=1}^M \left| r(x_i) \right|^2 = \sum_{i=1}^M \left| \left(\mathbf{\Psi}_N(y_i) - \mathbf{\Psi}_N(x_i)K\right)\mathbf{a} \right|^2,$$
+so, this is equivalent to $\min_{K} \| \Psi_Y - \Psi_X K\|_F$ and the minimal $K$ is
+$$K = \Psi_X^{\dagger}\Psi_Y = (\Psi_X^T\Psi_X)^{\dagger}(\Psi_X^T\Psi_Y) = G^{\dagger}A$$
+where $\dagger$ is the pseudoinverse and $G=\frac{1}{m}\Psi_X^T\Psi_X, A=\frac{1}{m}\Psi_X^T\Psi_Y$. 
+\begin{remark}
+	Regularization through truncated SVD or by adding a small perturbation is typically applied.
+\end{remark}
+
+\subsection*{S-EDMD framework}
+First, we can expand the Koopman operator(semigroup) $\mathcal{K}(t)$ similar as in EDMD:
+\begin{align}\label{edmd_expansion}
+	\mathcal{K}(t) f(x) 
+	&= \mathbb{E}[f(y)] \notag\\
+	&= \mathbf{\Psi}_N(x)K(t)\mathbf{a} + r(x) 
+\end{align}
+Alternatively, we approximate the Koopman operator(semigroup) $\mathcal{K}(t)$ analogous to Taylor expansion using the definition of generator\eqref{def_generator}:
+\begin{align}\label{taylor_t}
+	\mathcal{K}(t)f(x) &= \mathbb{E}[f(y)] \notag\\
+	&= \mathbb{E}[\mathbf{\Psi}_N(y)]\mathbf{a} \notag\\
+	&= \left[ \mathbf{\Psi}_N(x) + t \cdot \mathcal{L}\mathbf{\Psi}_N(x) + O(t^2)  \right]\mathbf{a}
+\end{align}
+where $\mathcal{L}\mathbf{\Psi}_N(x) = \left[ \mathcal{L}\mathbf{\psi}_1(x), \dots, \mathcal{L}\mathbf{\psi}_N(x) \right]$ and
+\begin{equation}\label{Ito_formula_generator}
+	\mathcal{L}\psi_j(x) = b(x)\cdot \nabla\psi_j(x) + \frac{1}{2}\sigma^2(x)\colon \nabla^2 \psi_j(x)
+\end{equation}
+\begin{remark}
+	We can get explicit higher order term $O(t^2)$ in \eqref{taylor_t} by applying It\^{o}'s formula recursively. See \ref{expansion_Ito_formula} for more details.
+\end{remark}
+\begin{remark}
+	In order to obtain \eqref{Ito_formula_generator}, we can use It\^{o}'s formula. From It\^{o}'s formula, we know that given $f\in C_b^2(\Omega)$ and $X_0=x$,
+	$$ df(X_t) = \left(b(X_t)\cdot \nabla f(X_t) + \frac{1}{2}\sigma^2(x)\colon \nabla^2 f(X_t)\right)dt + \sigma(X_t)\cdot \nabla f(X_t)dW_t $$
+	Taking expectation on its integral form, we have: 
+	$$\mathbb{E}[f(X_t)|X_0=x]-f(x) = \int_0^t \left( b(X_s)\cdot \nabla f(X_s) + \frac{1}{2}\sigma^2(X_s)\colon \nabla^2 f(X_s) \right) ds$$
+	Let $t \to 0$, we have
+	\begin{align*}
+		\frac{d}{dt}f = \mathcal{L}f(x) &\coloneqq \lim_{t \to 0} \frac{\mathbb{E}[f(X_t)-f(x)|X_0=x]}{t} \\
+		&= b(X_t)\cdot \nabla f(X_t) + \frac{1}{2}\sigma^2(x)\colon \nabla^2 f(X_t)
+	\end{align*}
+\end{remark}
+In our case, combning \eqref{taylor_t} and \eqref{edmd_expansion}, we can minimize the following:
+\begin{equation*}
+	J \coloneqq \sum_{i=1}^m \left| r(x_i) \right|^2 = \sum_{i=1}^m \left| \left[\mathbf{\Psi}_N(x_i) + t \cdot \mathcal{L}\mathbf{\Psi}_N(x_i) + O(t^2) - \mathbf{\Psi}_N(x_i)K\right]\mathbf{a} \right|^2
+\end{equation*}
+which is equivalent to minimize 
+\begin{equation}\label{loss}
+	\fcolorbox{red}{white}{$J = \min_{K} \| \Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2) - \Psi_X K \|_F^2$}
+\end{equation}
+and the minimal $K(t)$ is
+\begin{equation}\label{Koopman_semigroup_formula}
+	\fcolorbox{red}{white}{$K(t) = \Psi_X^{\dagger}(\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2))$}
+\end{equation}
+where the generator(time differential) matrix approximation $\left[\mathcal{L}\Psi_X\right]_{ij} = \mathcal{L}\psi_j(x_i)$. 
+\begin{remark}
+	$O(t^2)$ in \eqref{expansion_ot2}, \eqref{taylor_t} and \eqref{loss} are different. They are scalar, vector and matrix respectively. For example, each element of $O(t^2)$ in \eqref{taylor_t} and \eqref{loss} is a scalar $O(t^2)$ in \eqref{expansion_ot2}.
+\end{remark}
+
+Empirically, if $t$ is very small, we update the Koopman matrix approximation in the following way with $O(t^2)$ omitted:
+\begin{equation*}
+	\fcolorbox{red}{white}{$\widehat{K}(t) = \widehat{\Psi}_X^{\dagger}(\widehat{\Psi}_X + t \cdot \widehat{\mathcal{L}\Psi}_X)$}
+\end{equation*}
+\begin{remark}
+	For the case of trained basis by NN, we replace $\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2)$ by $\Psi_Y$ in \eqref{loss}, 
+\end{remark}
+
+Now, we will show that the computed $K_{N,n,m}$ by our S-EDMD method converges not only in large data $m$ and large dictionary size $N$, but also in zero-limit of sampling time $t=1/n$.
+
+\newpage
+\section{Convergence in the limit of large data}
+
+(1) i.i.d. data:
+\begin{align*}
+	&\quad P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) \\
+	&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi_X} \big) - \Psi_X^{\dagger}\mathbb{E}[\Psi_Y] \Vert_F > \epsilon \right) \\
+	&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - \Psi_X^{\dagger} \big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
+	&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - t\Psi_X^{\dagger}\mathcal{L}\Psi_{X} + O(t^2) \Vert_F > \epsilon \right) \\
+	&\leq P\left( t\Vert \widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - \Psi_X^{\dagger}\mathcal{L}\Psi_{X} \Vert_F + O(t^2) > \epsilon \right) \\
+	&= P\left( t\Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F + O(t^2) > \epsilon \right) \\
+\end{align*}
+where $G = \frac{1}{m}\Psi_X^* \Psi_X$ and $A = \frac{1}{m}\Psi_X^* \mathcal{L}\Psi_{X}$.
+% (2) ergodic sampling data:
+
+(From Wiki)
+
+A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfies the \textit{bounded differences property} if substituting the value of the $i$th coordinate $x_i$ changes the value of $f$ by at most $c_i$. More formally, if there are constants $c_1, c_2, \ldots, c_n$ such that for all $i \in [n]$, and all $x_1 \in \mathcal{X}_1, x_2 \in \mathcal{X}_2, \ldots, x_n \in \mathcal{X}_n$,
+\[
+\sup_{x_i' \in \mathcal{X}_i} |f(x_1, \ldots, x_{i-1}, x_i, x_{i+1}, \ldots, x_n) - f(x_1, \ldots, x_{i-1}, x_i', x_{i+1}, \ldots, x_n)| \leq c_i.
+\]
+
+% \noindent\textbf{McDiarmid's Inequality} Let f:X1×X2×⋯×Xn→Rf : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R} satisfy the bounded differences property with bounds c1,c2,…,cnc_1, c_2, \ldots, c_n.
+
+\begin{lemma}[McDiarmid's Inequality]\label{McDiarmid}
+	Let $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfy the bounded differences property with bounds $c_1, c_2, \ldots, c_n$. Consider independent random variables $X_1, X_2, \ldots, X_n$ where $X_i \in \mathcal{X}_i$ for all $i$. Then, for any $\epsilon > 0$,
+	\[
+	\mathbb{P}(|f(X_1, X_2, \ldots, X_n) - \mathbb{E}[f(X_1, X_2, \ldots, X_n)]| \geq \epsilon) \leq 2 \exp\left( - \frac{2\epsilon^2}{\sum_{i=1}^n c_i^2} \right).
+	\]
+\end{lemma}
+\begin{proof}
+	Omitted.
+\end{proof}
+
+\begin{lemma}[Hoeffding's Inequality]\label{Hoeffding}
+	Assume $X_i \in [a_i, b_i]$. Then, for any $\epsilon>0$,
+	\[
+	\mathbb{P}\left( \sum_{i=1}^n X_i - \mathbb{E}\left[\sum_{i=1}^n X_i\right] \geq \epsilon \right) \leq e^{-\frac{2\epsilon^2}{\sum_{i=1}^n (b_i - a_i)^2}}
+	\]
+	and
+	\[
+	\mathbb{P}\left(\left| \sum_{i=1}^n X_i - \mathbb{E}\left[\sum_{i=1}^n X_i\right]\right| \geq \epsilon \right) \leq 2e^{-\frac{2\epsilon^2}{\sum_{i=1}^n (b_i - a_i)^2}}
+	\]
+\end{lemma}
+\begin{proof}
+	The McDiarmid's Inequality\eqref{McDiarmid} directly implies Hoeffding's inequality by taking $f(X_1, \ldots, X_n) = \sum_{i=1}^n X_i$.
+\end{proof}
+
+\begin{theorem}\label{Gramian_estimation}
+	Let $| \psi_i(X_k) | \leq C$ $\mathbb{P}-a.e.$ for all $ 1 \leq i \leq N$ and $1 \leq k \leq m$. Suppose $\| \mathcal{L}_{N,n,m} \| \leq L$. Then, for any $\epsilon>0$, 
+	\[
+	\mathbb{P} \left( \left\| \widehat{G} - G \right\|_F \geq \epsilon \right) \leq 2N^2 \exp \left( -\frac{m \epsilon^2}{8 N^2 C^4} \right),
+	\]
+	\[
+	\mathbb{P} \left( \left\| \widehat{A} - A \right\|_F \geq \epsilon \right) \leq 2N^2 \exp \left( -\frac{m\epsilon^2}{8 N^2 C^4 L^2} \right).
+	\]
+\end{theorem}
+\begin{proof}
+	Define the random matrix $\eta(X):= \Psi(X)^T \Psi(X) \in \mathbb{R}^{N \times N}$, i.e., $\eta_{ij}(X) = \psi_i(X)\psi_j(X)$. Let $G = \mathbb{E}[\eta(X_1)], \widehat{G} = \frac{1}{m}\sum_{k=1}^{m} \eta(X_k)$. Then, 
+	\begin{align*}
+		\| \widehat{G} - G \|_F^2 &= \sum_{i=1}^{N}\sum_{j=1}^{N} \left| \widehat{G}_{ij} - G_{ij} \right|^2 \\
+		&= \sum_{i=1}^{N}\sum_{j=1}^{N} \left| \frac{1}{m}\sum_{k=1}^m \eta_{ij}(X_k) - \mathbb{E}\left[\eta_{ij}(X_k)\right] \right|^2
+	\end{align*}
+	where $\Tilde{\eta}(X) \coloneqq \eta(X) - \mathbb{E}\left[\eta(X_1)\right]$ and thus $\left| \Tilde{\eta}_{ij}(X) \right| \leq 2C^2$ for all $1 \leq i,j \leq N$.
+	Next, applying Hoeffding's inequality \eqref{Hoeffding} and union bound, we have
+	\begin{align*}
+		\mathbb{P} \left( \left\| \widehat{G} - G \right\|_F \geq \epsilon \right) &= \mathbb{P} \left( \left\| \widehat{G} - G \right\|_F^2 \geq \epsilon^2 \right) \\
+		&\leq \mathbb{P} \left( \sum_{i=1}^{N}\sum_{j=1}^{N} \left| \frac{1}{m} \sum_{k=1}^m \Tilde{\eta}_{ij}(X_k) \right|^2 \geq \epsilon^2 \right) \\
+		&\leq N^2 \mathbb{P} \left( \left| \frac{1}{m} \sum_{k=1}^m \Tilde{\eta}_{ij}(X_k) \right|^2 \geq \epsilon^2/N^2 \right) \\
+		&= N^2 \mathbb{P} \left( \left| \frac{1}{m} \sum_{k=1}^m \Tilde{\eta}_{ij}(X_k) \right| \geq \epsilon/N \right) \\
+		&\leq 2N^2 \exp \left( -\frac{2(m\epsilon/N)^2}{m(4C^2)^2} \right) \\
+		&= 2N^2 \exp \left( -\frac{m \epsilon^2}{8 N^2 C^4} \right)
+	\end{align*}
+	Similarly, define $\xi(X) \coloneqq \Psi(X)^T \mathcal{L}_{N,n,m}\Psi(X)$. Since 
+	\[ |\psi_i(X) \mathcal{L} \psi_j(X)| \leq C^2\|\mathcal{L}_{N,n,m}\| \leq C^2 L, \]
+	we have
+	\[ \mathbb{P} \left( \| \widehat{A} - A \|_F \geq \epsilon \right) \leq 2 N^2 \exp \left( -\frac{m\epsilon^2}{8 N^2 C^4 L^2} \right), \]
+\end{proof}
+
+
+\begin{lemma}[\href{https://arxiv.org/pdf/2402.02494}{Philipp, Lemma C.5}]\label{Philipp}
+	Let $G, A \in \mathbb{R}^{N \times N}$ be such that $G$ is invertible and $A \neq 0$. Let $\widehat{G}, \widehat{A} \in \mathbb{R}^{N \times N}$ be random matrices such that $\widehat{G}$ is invertible a.s. Then for any sub-multiplicative matrix norm $\|\cdot\|$ on $\mathbb{R}^{N \times N}$ and any $\epsilon > 0$ we have
+	\[
+	\mathbb{P}\left(\|G^{-1}A - \widehat{G}^{-1}\widehat{A}\| > \epsilon \right) \leq \mathbb{P}\left(\|A - \widehat{A}\| > \frac{\epsilon}{\tau} \|A\|\right) + \mathbb{P}\left(\|G - \widehat{G}\| > \frac{\epsilon}{\tau} \|G^{-1}\|^{-1}\right),
+	\]
+	where $\tau = 2\|G^{-1}\|\|A\| + \epsilon$.
+\end{lemma}
+
+\begin{theorem}
+	Let $\epsilon>0$. Define $\epsilon_t = \left(\epsilon - O(t^2)\right)/t$. Then, with same conditions defined in Theorem \ref{Gramian_estimation} and Lemma \ref{Philipp}, we have
+	\begin{equation*}
+		P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) \leq 2N^2 \left[ \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t}{N C^2 \tau \|G^{-1}\|}\right)^2 \right) + \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t \|A\|}{N C^2 \tau L}\right)^2 \right) \right]
+	\end{equation*}  
+\end{theorem}
+\begin{proof}
+	\begin{align*}
+		P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) 
+		&= P\left( t\Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F + O(t^2) > \epsilon \right) \\
+		&= P\left( \Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F  > \epsilon_t \right) \\
+		&\leq \mathbb{P}\left(\|G - \widehat{G}\| > \frac{\epsilon_t}{\tau} \|G^{-1}\|^{-1} \right) + \mathbb{P}\left(\|A - \widehat{A}\| > \frac{\epsilon_t}{\tau} \|A\| \right) \\
+		&\leq 2N^2 \exp \left( -\frac{m (\frac{\epsilon_t}{\tau} \|G^{-1}\|^{-1})^2}{8 N^2 C^4} \right) + 2N^2 \exp \left( -\frac{m (\frac{\epsilon_t}{\tau} \|A\|)^2}{8 N^2 C^4 L^2} \right) \\
+		&= 2N^2 \left[ \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t \|G^{-1}\|^{-1}}{N C^2 \tau}\right)^2 \right) + \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t \|A\|}{N C^2 \tau L}\right)^2 \right) \right]
+	\end{align*}  
+\end{proof}
+
+
+\newpage
+\section{Convergence in zero-limit of sampling time}
+Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct a sequence of generator approximant $\{A_{N,n}\}_{n\geq 1}$ and find its limit as $n\to\infty$, if the limit exists in some sense. Once we find the limit, we can create the continuous time $N$-dimensional Koopman semigroup. 
+
+%	\newpage
+%	\subsection{(\textcolor{red}{Fail}) Convergence of the generator approximant $\mathcal{A}_n$}
+%	Define a sequence of bounded operator $\mathcal{A}_n$ by discrete semigroup $\mathcal{K}_n(\frac{1}{n})$ from the formula \eqref{Koopman_semigroup_formula}:
+%	We aim to demonstrate that our S-EDMD method converges not only for large data sets ($m \to \infty$) and large dictionary sizes ($N \to \infty$), but also in the zero-limit of sampling time ($t = 1/n \to 0$). We will proceed in two steps:
+%	\begin{enumerate}
+%		\item Let $\mathcal{K}_n\left(\tfrac{1}{n}\right)$ be the (infinite dimensional) discrete semigroup evaluated at time $t=\tfrac{1}{n}$ and $K_{n,N}(\tfrac{1}{n})$ be the matrix representation of $\mathcal{P}_N\mathcal{K}_n\left(\tfrac{1}{n}\right)\mathcal{P}_N$. Construct a sequence of operators $\mathcal{A}_n$ using the discrete Koopman semigroup $\mathcal{K}_n(1/n)$ and try to identify its limit $\mathcal{A}$
+%		\item Show that the continuous-time semigroup $e^{t\mathcal{A}_n}$ converges to the limiting semigroup $e^{t\mathcal{A}}$ as $n \to \infty$ using the First Trotter-Kato Approximation Theorem.
+%	\end{enumerate}
+%	
+%	\begin{theorem}
+%		Define a sequence of (bounded) operator \( \{\mathcal{A}_n\}_{n\geq1} \) where
+%		\begin{align*}
+%			\mathcal{A}_n &\coloneqq \frac{ \mathcal{K}_n\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}},
+%		\end{align*}
+%		then,
+%		\begin{equation*}
+%			\lim_{n \to \infty}  \mathcal{A}_n 
+%			= \lim_{N \to \infty}\lim_{m \to \infty} \left[\Psi_X^{\dagger}\mathcal{L}\Psi_X\right]
+%		\end{equation*}
+%		in strong operator topology. Moreover, the true Koopman semigroup is 
+%		\begin{equation*}
+%			\mathcal{K}(t) = \exp{\left(t \lim_{N \to \infty}\lim_{m \to \infty} \left[\Psi_X^{\dagger}\mathcal{L}\Psi_X\right] \right)}
+%		\end{equation*}
+%	\end{theorem}
+%	
+%	\begin{proof}
+%		(Sketch:)
+%		
+%		(1) Show the limit $\mathcal{A} := \lim_{N\to\infty} \lim_{m\to\infty} [\Psi^\dagger_X \mathcal{L}\Psi_X]$ exists in any weaker sense.
+%		
+%		(2) Then,
+%		\begin{align*}
+%			\mathcal{A}_n &\coloneqq \frac{ \mathcal{K}_n\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}} \\
+%			&= \frac{ \lim_{N \to \infty}\lim_{m \to \infty} \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
+%			&= \frac{ \lim_{N \to \infty}\lim_{m \to \infty} \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}}
+%		\end{align*}
+%		Notice that, the $I$ inside of the limit is a $N\times N$ matrix and the $I$ outside of the limit is an indentity operator. Then,
+%		\begin{align*}
+%			\|\mathcal{A}_nf - \mathcal{A}f\| 
+%			&= \|\left[\lim_{N\to\infty}\lim_{m\to\infty} \left(\Psi^\dagger_X \mathcal{L}\Psi_X + O(\tfrac{1}{n}) \right)\right]f - \left[\lim_{N\to\infty}\lim_{m\to\infty} \left(\Psi^\dagger_X \mathcal{L}\Psi_X \right)\right]f\| \\
+%			&= \|\left[\lim_{N\to\infty}\lim_{m\to\infty} O(\tfrac{1}{n})\right]f\| \\
+%			&= \|\left[\lim_{N\to\infty} O(\tfrac{1}{n})\right]f\| \quad \text{Here the $O(\tfrac{1}{n})$ is a matrix} \\
+%			&= \|\lim_{N\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\| \quad \text{Here the $O(\tfrac{1}{n})$ is an operator} \\
+%			&= \|O(\tfrac{1}{n})f\| \\
+%			&\text{(Need to: verify the operator $O(\tfrac{1}{n})$ is bounded so we can apply Theorem \ref{convergence_large_dic_size})}\\
+%			&\text{(We can't show it is bounded. See comments below for more details)} \\
+%			&\to 0
+%		\end{align*}
+%		for all $f \in \mathcal{D}(\mathcal{A})$. Thus, $\lim_{n\to\infty} \mathcal{A}_n = \mathcal{A}$ in the strong operator topology.
+%		
+%		Next, let $(e^{t\mathcal{A}_n})_{t\geq0}, n\in\mathbb{N}$ and $(e^{t\mathcal{A}})_{t\geq0}$ be strongly continuous semigroups generated by $\mathcal{A}_n$ and $\mathcal{A}$ respectively, then we have $e^{t\mathcal{A}_n}x \to e^{t\mathcal{A}}x$ for all $x \in X$, uniformly for $t$ in some compact interval according to First Trotter-Kato Approximation Theorem.
+%	\end{proof}
+%	
+%	
+%	\textbf{Show $\|O(\tfrac{1}{n})f\|$ fails to converge if we take $N\to\infty$ before $n\to\infty$}
+%	\begin{align*}
+%		&\|\lim_{n\to\infty}\lim_{N\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\|\\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\sum_{i=1}^N \psi_i a_i\| \quad \text{Here the $O(\tfrac{1}{n})$ is an operator} \\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} \mathbf{\Psi}O(\tfrac{1}{n})\mathbf{a}\| \quad \text{Here the $O(\tfrac{1}{n})$ is a matrix} \\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} 
+%		\begin{bmatrix}
+%			\psi_1 & \cdots & \psi_N
+%		\end{bmatrix}
+%		\begin{bmatrix}
+%			O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n}) \\
+%			\vdots & \ddots & \vdots \\
+%			O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n})
+%		\end{bmatrix}
+%		\begin{bmatrix}
+%			a_1 \\
+%			\vdots \\
+%			a_N
+%		\end{bmatrix} \| \\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} 
+%		\begin{bmatrix}
+%			\psi_1 & \cdots & \psi_N
+%		\end{bmatrix}
+%		\begin{bmatrix}
+%			a_1' \\
+%			\vdots \\
+%			a_N'
+%		\end{bmatrix} \| \\
+%		&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} \sum_{i=1}^N \psi_i a_i' \| \\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \| \\
+%		&\leq \|\lim_{n\to\infty}\lim_{N\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \| \\
+%		&= \|\lim_{n\to\infty}\lim_{N\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) \|
+%	\end{align*}
+%	
+%	\begin{remark}[\textbf{The condition of taking the limit of $n$ before $N$}]
+%		Without extra condition, we can take the limit in the following order: $\lim_{n\to\infty}\lim_{N\to\infty}\lim_{m\to\infty}$. If we take the limit in this order: $\lim_{N\to\infty}\lim_{n\to\infty}\lim_{m\to\infty}$, it will break the semigroup property unless we add the condition: $\mathcal{K}(t)\mathcal{P}_{N}$ is invariant in the $N$-subspace projected by $\mathcal{P}_{N}$ $, i.e., \mathcal{K}(t)\mathcal{P}_{N} \subseteq \mathcal{P}_{N}$. After we add this condition, we can add $\textcolor{red}{\mathcal{P}_{N}\mathcal{P}_{N}}$ in front of $\textcolor{blue}{\mathcal{K}(s)\mathcal{P}_{N}}$, then
+%		\begin{align*}
+%			\mathcal{K}_{N}(t+s) &\coloneqq \mathcal{P}_{N}\mathcal{K}(t+s)\mathcal{P}_{N} \\ 
+%			&= \mathcal{P}_{N}\mathcal{K}(t)\mathcal{K}(s)\mathcal{P}_{N} \\
+%			&= \mathcal{P}_{N}\mathcal{K}(t)\textcolor{red}{\mathcal{P}_{N}\mathcal{P}_{N}}\textcolor{blue}{\mathcal{K}(s)\mathcal{P}_{N}} \\
+%			&= \mathcal{K}_{N}(t)\mathcal{K}_{N}(s)
+%		\end{align*}
+%		where $\mathcal{K}_{N}(t)$ is a (continuous time) semigroup projected by $\mathcal{P}_{N}$.
+%	\end{remark}
+
+
+%	Let $\mathcal{A}$ be the Koopman generator and $\mathcal{A}_N \coloneqq \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$ where $\mathcal{F}_N$ is the subspace spanned by the dictionary functions $\{\psi_i\}_{i=1}^N$. For each $N>0$, let $\{\mathcal{A}_{N,n}\}_{n\geq 1}$ be a sequence of operator with its matrix representation defined in the following:
+First, for each $N>0$, construct the following sequence of matrices:
+\begin{align*}
+	A_{N,n} &\coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}} \\
+	&= \frac{ \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
+	&= \frac{ \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}} \\
+	&= \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n}) \\
+	&\quad (\text{Here the first term is not dependent on $n$})
+\end{align*}
+Next, choose $f = \mathbf{\Psi}_N\mathbf{a} \in C_b^2(\Omega)$, we have
+\begin{align*}
+%	&\quad \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
+%	&= \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\sum_{i=1}^N \psi_i a_i\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
+	&\quad \|\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n}\mathbf{a}\| \\
+	&= \|\lim_{n\to\infty} \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a}\| \\
+	&= \|\mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
+\end{align*}
+Then,
+\begin{align*}
+	&\quad \|\lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \\
+	&= \|\lim_{n\to\infty} 
+	\begin{bmatrix}
+		\psi_1 & \cdots & \psi_N
+	\end{bmatrix}
+	\begin{bmatrix}
+		O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n}) \\
+		\vdots & \ddots & \vdots \\
+		O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n})
+	\end{bmatrix}
+	\begin{bmatrix}
+		a_1 \\
+		\vdots \\
+		a_N
+	\end{bmatrix} \| \\
+	&= \|\lim_{n\to\infty} 
+	\begin{bmatrix}
+		\psi_1 & \cdots & \psi_N
+	\end{bmatrix}
+	\begin{bmatrix}
+		a_1' \\
+		\vdots \\
+		a_N'
+	\end{bmatrix} \| \\
+	&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
+	&= \|\lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \| \\
+	&= \|\lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \| \\
+	&\leq \|\lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \| \\
+	&= \|\lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) \| = 0
+\end{align*}
+Therefore, for $f=\mathbf{\Psi}_N\mathbf{a}$, we have
+$$\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a}$$ 
+where $A_N = \Psi_X^{\dagger}\mathcal{L}\Psi_X$. In other words,
+$$
+\lim_{n\to\infty} \mathcal{A}_{N,n} f = \mathcal{A}_N f
+$$
+where $\mathcal{A}_{N,n}, \mathcal{A}_N$ are the operators whose matrix representation are $A_{N,n}, A_N$ respectively.(\textcolor{red}{Not sure if it is appropriate and necessary to mention $\mathcal{A}_{N,n}, \mathcal{A}_N$ here. If yes, do we need to define the domain for these operators?})
+
+Next, by Trotter-Kato Approximation theorem, we have 
+$$\lim_{n\to\infty} \mathbf{\Psi}_N K_{N,n} \mathbf{a} = \mathbf{\Psi}_N K_N \mathbf{a}$$ 
+where $K_{N,n}(t) = e^{t A_{N,n}}, K_{N}(t) = e^{t A_N}$. In other words, we have
+$$
+\lim_{n\to\infty}\mathcal{K}_{N,n}(t) f = \mathcal{K}_{N}(t) f
+$$ where $\mathcal{K}_{N,n}(t)\coloneqq e^{t \mathcal{A}_{N,n}}, \mathcal{K}_{N}(t)\coloneqq e^{t \mathcal{A}_N}$.
+
+\subsection*{First Trotter--Kato Approximation Theorem.} 
+\textit{(Trotter 1958, Kato 1959)}. Let $(T(t))_{t\geq0}$ and $(T_n(t))_{t\geq0}$, $n \in \mathbb{N}$, be strongly continuous semigroups on $X$ with generators $\mathcal{A}$ and $\mathcal{A}_n$, respectively, and assume that they satisfy the estimate
+\[
+\|T(t)\|, \|T_n(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, n \in \mathbb{N},
+\]
+and some constants $M \geq 1$, $w \in \mathbb{R}$. Take $\mathcal{D}$ to be a core for $\mathcal{A}$ and consider the following assertions.
+\begin{itemize}
+		\item[(a)] $\mathcal{D} \subset \mathcal{D}(\mathcal{A}_n)$ for all $n \in \mathbb{N}$ and $\mathcal{A}_n x \to \mathcal{A} x$ for all $x \in \mathcal{D}$.
+		\item[(b)] For each $x \in \mathcal{D}$, there exists $x_n \in \mathcal{D}(\mathcal{A}_n)$ such that $x_n \to x$ and $\mathcal{A}_n x_n \to \mathcal{A} x$.
+		\item[(c)] $R(\lambda, \mathcal{A}_n)x \to R(\lambda, \mathcal{A})x$ for all $x \in X$ and some/all $\lambda > w$.
+		\item[(d)] $T_n(t)x \to T(t)x$ for all $x \in X$, uniformly for $t$ in compact intervals.
+	\end{itemize}
+Then the implications
+\[
+\text{(a)} \implies \text{(b)} \iff \text{(c)} \iff \text{(d)}
+\]
+hold, while $(b)$ does not imply $(a)$.
+
+
+
+
+
+\newpage
+\section{Convergence in large dictionary size $N$}
+In this section, we want to show that $\mathcal{P}_N\mathcal{A}|_{\mathcal{F}_N} = \mathcal{A}_N \to \mathcal{A}$ in strong operator topology as $N \to \infty$, under a similar mathematical framework established in gEDMD analysis \href{https://arxiv.org/abs/2405.00539}{paper} . In addition, if we can assume the $\{\mathcal{K}_{N}(t)\}_{N\geq 1}, \mathcal{K}(t)$ is exponentially bounded for all $t\geq 0$, then we can use the Trotter-Kato Approximation theorem to obtain $\mathcal{P}_N\mathcal{K}(t)|_{\mathcal{F}_N} = \mathcal{K}_{N}(t) \to \mathcal{K}(t)$ in strong operator topology as $N \to \infty$, uniformly for $t$ in a compact interval.
+
+
+\subsection{Convergence of \(\mathcal{A}_N\) to \(\mathcal{A}\) (in the \(L^2\) norm)}
+
+\begin{definition}
+	% Operator A and its domain
+	$\mathcal{A}: \text{ operator of interest}$
+	$\mathcal{D} := \{f \in \mathcal{F} : \mathcal{A}f \in \mathcal{F}\}$
+	
+	% State space and function space
+	$(\mathbb{X}, \mathcal{B}, \mu): \text{ state space}$
+	$\mathcal{F} := L^2(\mathbb{X}, \mu)$
+	
+	% Closed operator definition
+	$\text{Graph of } \mathcal{A}: \{(f, \mathcal{A}f) \in \mathcal{F} \times \mathcal{F} : f \in \mathcal{D}\}$
+	
+	% Inner product and norm in D
+	$\langle f, g \rangle_\mathcal{D} := \langle f, g \rangle_\mathcal{F} + \langle \mathcal{A}f, \mathcal{A}g \rangle_\mathcal{F}$
+	$\|f\|^2 := \langle f, f \rangle_\mathcal{D}, \quad \forall f, g \in \mathcal{D}$
+	
+	% Properties of A
+	$\|\mathcal{A}\| \leq 1$
+	$\|f\|_\mathcal{F} \leq \|f\|_\mathcal{D}$
+	
+	% Special cases
+	$\text{If } \mathcal{A} \text{ is continuous on } \mathcal{F}, \text{ then } \mathcal{D} = \mathcal{F}$
+	
+	% Weighted Sobolev space
+	$\mathcal{D} = H^k(\mathbb{X}, \mu): \text{ weighted Sobolev space}$
+	$\|\psi\|_{H^k(\mathbb{X},\mu)} = \sum_{|\alpha|\leq k} \left(\int_\mathbb{X} |D^\alpha \psi|^2 d\mu\right)^{1/2}$
+	
+	% Special cases for D
+	$\text{If } \mathcal{A} \text{ is generator of a stochastic process: } \mathcal{D} = H^2(\mathbb{X}, \mu)$
+	$\text{If system is deterministic: } \mathcal{D} = H^1(\mathbb{X}, \mu)$
+\end{definition}
+
+We denote the operator of interest by \( A \), which can represent various operators, such as \( K \), \( K^t \), \( L \), or \( L^* \), in discrete or continuous time. We consider the state space \( (X, \mathcal{B}, \mu) \) and let \( \mathcal{F} := L^2(X, \mu) \). The observables on which \( A \) acts define the domain of \( A \), i.e.,
+\[
+D := \{ f \in \mathcal{F} : A f \in \mathcal{F} \}.
+\]
+
+The operator \( A \) is said to be a \textit{closed operator} if the graph of \( A \),
+\[
+\{ (f, A f) \in \mathcal{F} \times \mathcal{F} : f \in D \},
+\]
+is a closed subspace of \( \mathcal{F} \times \mathcal{F} \). If \( A \) is closed, then \( D \) is a Hilbert space with the inner product
+\[
+\langle f, g \rangle_D := \langle f, g \rangle_{\mathcal{F}} + \langle A f, A g \rangle_{\mathcal{F}}, \quad \forall f, g \in D,
+\]
+and norm
+\[
+\| f \|_D^2 := \langle f, f \rangle_D.
+\]
+A direct consequence of this definition is that \( \| f \|_{\mathcal{F}} \leq \| f \|_D \) and that \( A : D \to \mathcal{F} \) is a continuous operator with \( \| A \| \leq 1 \).
+
+In practice, there are two main cases. If \( A \) is continuous on \( \mathcal{F} \), then \( D = \mathcal{F} \) and the norms \( \| \cdot \|_D \) and \( \| \cdot \|_{\mathcal{F}} \) are equivalent. Otherwise, \( A \) is typically the infinitesimal generator of a strongly continuous semigroup, and \( D \) will be dense in \( \mathcal{F} \). 
+
+A common example is where \( D \) is a weighted Sobolev space \( H^k(X, \mu) \) containing all measurable functions \( \psi : X \to \mathbb{R} \) with finite norm:
+\[
+\| \psi \|_{H^k(X, \mu)} = \left( \sum_{|\alpha| \leq k} \int_X |D^\alpha \psi|^2 \, d\mu \right)^{1/2},
+\]
+where \( D^\alpha \) is the weak derivative of order \( \alpha \). For example, if \( A \) is the generator of a stochastic process, then \( D = H^2(X, \mu) \). If the system is deterministic, then \( D = H^1(X, \mu) \).
+
+
+
+\begin{assumption}\label{assumption_1}
+	We assume the following:
+	\begin{enumerate}
+		\item The basis functions $\Psi = \{ \psi_1, \dots, \psi_N \} \subset \mathcal{D}$ are linearly independent.
+		\item The functions $\{ \psi_i, \mathcal{A} \psi_i \}_{i=1}^N$ are continuous $\mu$-a.e..
+		\item The points $\{ x_i \}_{i=1}^m \subset \Omega$ are i.i.d. samples from $\mu$.
+	\end{enumerate}
+\end{assumption}
+
+\begin{assumption}\label{assumption_2}
+	Assumption \ref{assumption_1} holds and
+	\[
+	\lim_{N \to \infty} \| \mathcal{P}_N \phi - \phi \|_{\mathcal{F}} = 0, \quad \forall \phi \in \mathcal{F},
+	\]
+	where $\mathcal{P}_N$ is the projection of $\mathcal{F}$ onto $\mathcal{F}_N$ using the inner product on $\mathcal{F}$.	
+\end{assumption}
+
+\begin{assumption}\label{assumption_3}
+	Assumption \ref{assumption_1} holds, $\mathcal{A}$ is a closed operator, and
+	\[
+	\lim_{N \to \infty} \| \mathcal{P}_{\mathcal{D}_N} f - f \|_{\mathcal{D}} = 0, \quad \forall f \in \mathcal{D}.
+	\]
+	Here, $\mathcal{P}_{\mathcal{D}_N}$ is the projection of $\mathcal{D}$ onto $\mathcal{F}_N$ using the inner product on $\mathcal{D}$.
+\end{assumption}
+
+\begin{theorem}
+	Let $\Psi$ satisfy Assumption \ref{assumption_2} and \ref{assumption_3}, then
+	\[
+	\lim_{N \to \infty} \| \mathcal{A}_N \mathcal{P}_{\mathcal{D}_N} f - \mathcal{A} f \|_{\mathcal{F}} = 0, \quad \forall f \in \mathcal{D}.
+	\]
+\end{theorem}
+
+\begin{proof}
+	By definition $\mathcal{A}_N = \mathcal{P}_N \mathcal{A} |_{\mathcal{F}_N}$, we obtain
+	\begin{align*}
+		\mathcal{A}_N \mathcal{P}_{\mathcal{D}_N} - \mathcal{A} &= (\mathcal{A}_N - \mathcal{A}) \mathcal{P}_{\mathcal{D}_N} + \mathcal{A} \mathcal{P}_{\mathcal{D}_N} - \mathcal{A} \\
+		&= (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} \mathcal{P}_{\mathcal{D}_N} + \mathcal{A} (\mathcal{P}_{\mathcal{D}_N} - \mathrm{Id}) \\
+		&= (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} + (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} (\mathcal{P}_{\mathcal{D}_N} - \mathrm{Id}) + \mathcal{A} (\mathcal{P}_{\mathcal{D}_N} - \mathrm{Id}).
+	\end{align*}	
+	Consider now $f \in \mathcal{D}$. By Assumptions \ref{assumption_2}, \ref{assumption_3} and the fact that $\mathcal{A}$ is continuous on its domain, we have
+	\begin{align*}
+		\| \mathcal{A}_N \mathcal{P}_{\mathcal{D}_N} f - \mathcal{A} f \|_{\mathcal{F}} &\leq \| (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} f \|_{\mathcal{F}} + \| (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} \| \| \mathcal{P}_{\mathcal{D}_N} f - f \|_{\mathcal{D}} \\
+		&\quad + \| \mathcal{A} \| \| \mathcal{P}_{\mathcal{D}_N} f - f \|_{\mathcal{D}} \to 0.
+	\end{align*}
+	
+	
+	
+	
+\end{proof}
+
+
+
+
+\subsection{Convergence of \(\mathcal{K}_N(t)\) to \(\mathcal{K}(t)\) (in the \(L^2\) norm)}
+
+Outline: make suitable assumptions(Koopman operators are exponentially bounded) and use Trotter-Kato Approximation theorem to show the convergence.
+
+
+
+
+
+
+
+
+\appendix
+\newpage
+\section{"Taylor" expansion of stochastic Koopman operator}\label{expansion_Ito_formula}
+By applying It\^{o}'s formula to both \( f(X_t) \) and \( \mathcal{A} f(X_t) \), we can derive a "Taylor expansion" for \( \mathbb{E}[f(X_t)] \) as in \eqref{taylor_t}. 
+
+First, we apply It\^{o}'s formula to \( f(X_t) \):
+\[
+f(X_t) = f(x) + \int_0^t (\mathcal{A} f)(X_s)\, ds + \int_0^t f'(X_s)\, \sigma(X_s)\, dW_s.
+\]
+Next, we treat \( \mathcal{A} f \) as a function and apply It\^{o}'s formula to \( \mathcal{A} f(X_s) \):
+\[
+(\mathcal{A} f)(X_t) = (\mathcal{A} f)(x) + \int_0^t [\mathcal{A} (\mathcal{A} f)](X_s)\, ds + \int_0^t (\mathcal{A} f')(X_s)\, \sigma(X_s)\, dW_s.
+\]
+Then, we substitute this expression for \( \mathcal{A} f(X_t) \) back into the formula for \( f(X_t) \):
+\[
+\begin{aligned}
+	f(X_t) &= f(x) + \int_0^t (\mathcal{A} f)(X_s)\, ds + \int_0^t f'(X_s)\, \sigma(X_s)\, dW_s \\
+	&= f(x) + \int_0^t \left[ (\mathcal{A} f)(x) + \int_0^s [\mathcal{A} (\mathcal{A} f)](X_u)\, du + \int_0^s (\mathcal{A} f')(X_u)\, \sigma(X_u)\, dW_u \right] ds \\
+	&\qquad + \int_0^t f'(X_s)\, \sigma(X_s)\, dW_s.
+\end{aligned}
+\]
+After rearranging terms, we have:
+\[
+\begin{aligned}
+	f(X_t) &= f(x) + (\mathcal{A} f)(x)\, t + \int_0^t \int_0^s [\mathcal{A} (\mathcal{A} f)](X_u)\, du\, ds \\
+	&\qquad + \int_0^t \int_0^s (\mathcal{A} f')(X_u)\, \sigma(X_u)\, dW_u\, ds + \int_0^t f'(X_s)\, \sigma(X_s)\, dW_s.
+\end{aligned}
+\]
+Taking expectations on both sides and noting that the stochastic integrals have zero mean (assuming appropriate integrability conditions), we get:
+\[
+\mathbb{E}[f(X_t)] = f(x) + (\mathcal{A} f)(x)\, t + \int_0^t \int_0^s \mathbb{E}\left[ \mathcal{A} (\mathcal{A} f)(X_u) \right] du\, ds.
+\]
+The double integral term represents the accumulated effect of the higher-order derivatives of \( f \) over time. To understand its order, consider that if \( \mathbb{E}\left[ \mathcal{A} (\mathcal{A} f)(X_u) \right] \) is bounded by some constant \( M \), then:
+\[
+\left| \int_0^t \int_0^s \mathbb{E}\left[ \mathcal{A} (\mathcal{A} f)(X_u) \right] du\, ds \right| \leq M \int_0^t \int_0^s du\, ds = M \int_0^t s\, ds = M \frac{t^2}{2}.
+\]
+This shows that the double integral is of order \( O(t^2) \) when \( t \) is small.
+
+Therefore, for small \( t \), the expected value simplifies to:
+\begin{equation}\label{expansion_ot2}
+	\mathbb{E}[f(X_t)] = f(x) + (\mathcal{A} f)(x)\, t + O(t^2).
+\end{equation}
+
+
+
+
+
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
