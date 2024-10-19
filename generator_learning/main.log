@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.5.22)  18 OCT 2024 00:47
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.5.22)  19 OCT 2024 01:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -404,111 +404,97 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 [1
 
 {C:/Users/xyc93/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}] [2]
-Overfull \hbox (0.87865pt too wide) in paragraph at lines 158--160
+Overfull \hbox (0.87865pt too wide) in paragraph at lines 157--159
 \OT1/cmr/m/n/10 where the gen-er-a-tor(time dif-fer-en-tial) ma-trix ap-prox-i-
 ma-tion $[][] = \OMS/cmsy/m/n/10 L\OML/cmm/m/it/10  []\OT1/cmr/m/n/10 (\OML/cmm
 /m/it/10 x[]\OT1/cmr/m/n/10 )$. 
  []
 
 [3] [4] [5] [6]
-Overfull \hbox (6.01134pt too wide) detected at line 258
+Overfull \hbox (6.01134pt too wide) detected at line 257
 \U/msb/m/n/10 P [] \OMS/cmsy/m/n/10 ^^T \U/msb/m/n/10 P [] \OT1/cmr/m/n/10 + \U
 /msb/m/n/10 P [] \OML/cmm/m/it/10 ;
  []
 
 
-Overfull \hbox (84.43561pt too wide) detected at line 266
+Overfull \hbox (84.43561pt too wide) detected at line 265
 \OML/cmm/m/it/10 P [] \OMS/cmsy/m/n/10 ^^T \OT1/cmr/m/n/10 2\OML/cmm/m/it/10 N[
 ] []
  []
 
 
-Overfull \hbox (75.77457pt too wide) detected at line 276
+Overfull \hbox (75.77457pt too wide) detected at line 275
 []
  []
 
 [7] [8] [9]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 472.
+(hyperref)                removing `math shift' on input line 445.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 472.
+(hyperref)                removing `math shift' on input line 445.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 476.
+(hyperref)                removing `math shift' on input line 449.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 476.
+(hyperref)                removing `subscript' on input line 449.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 476.
+(hyperref)                removing `math shift' on input line 449.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 476.
+(hyperref)                removing `math shift' on input line 449.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 476.
-
-
-Overfull \hbox (13.31078pt too wide) in paragraph at lines 502--504
-[]$\OMS/cmsy/m/n/10 D \OT1/cmr/m/n/10 = \OML/cmm/m/it/10 H[]\OT1/cmr/m/n/10 (\U
-/msb/m/n/10 X\OML/cmm/m/it/10 ; ^^V\OT1/cmr/m/n/10 ) : []$ $\OMS/cmsy/m/n/10 k\
-OML/cmm/m/it/10  \OMS/cmsy/m/n/10 k[] \OT1/cmr/m/n/10 = [][] [][]$ 
- []
-
-
-Overfull \hbox (51.12459pt too wide) in paragraph at lines 506--508
-[]$[]\OMS/cmsy/m/n/10 A[]D \OT1/cmr/m/n/10 = \OML/cmm/m/it/10 H[]\OT1/cmr/m/n/1
-0 (\U/msb/m/n/10 X\OML/cmm/m/it/10 ; ^^V\OT1/cmr/m/n/10 )$ $[]\OMS/cmsy/m/n/10 
-D \OT1/cmr/m/n/10 =
- []
+(hyperref)                removing `superscript' on input line 449.
 
 [10]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 592.
+(hyperref)                removing `math shift' on input line 543.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 592.
+(hyperref)                removing `subscript' on input line 543.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 592.
+(hyperref)                removing `math shift' on input line 543.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 592.
+(hyperref)                removing `math shift' on input line 543.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `superscript' on input line 592.
+(hyperref)                removing `superscript' on input line 543.
 
 
-Overfull \hbox (18.4175pt too wide) in paragraph at lines 594--595
+Overfull \hbox (18.4175pt too wide) in paragraph at lines 545--546
 \OT1/cmr/m/n/10 Outline: make suit-able as-sump-tions(Koopman op-er-a-tors are 
 ex-po-nen-tially bounded)
  []
 
-[11]
-Overfull \hbox (16.66594pt too wide) detected at line 623
+[11] [12]
+Overfull \hbox (16.66594pt too wide) detected at line 590
 [][]
  []
 
 
-Overfull \hbox (5.83464pt too wide) in paragraph at lines 634--636
+Overfull \hbox (5.83464pt too wide) in paragraph at lines 601--603
 \OT1/cmr/m/n/10 deriva-tives of $\OML/cmm/m/it/10 f$ \OT1/cmr/m/n/10 over time.
  To un-der-stand its or-der, con-sider that if $\U/msb/m/n/10 E []$
  []
 
-[12] (main.aux)
+[13] (main.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-04-11>
@@ -517,13 +503,13 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 02634D1712162AE979575434E0A56FF7;1828.
  ) 
 Here is how much of TeX's memory you used:
- 10882 strings out of 474370
- 167997 string characters out of 5740535
+ 10877 strings out of 474370
+ 167784 string characters out of 5740535
  1947754 words of memory out of 5000000
- 33094 multiletter control sequences out of 15000+600000
- 569463 words of font info for 79 fonts, out of 8000000 for 9000
+ 33090 multiletter control sequences out of 15000+600000
+ 568765 words of font info for 77 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,16n,79p,679b,594s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,16n,79p,679b,669s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
 cmbx10.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/ams
 fonts/cm/cmbx12.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/p
@@ -546,11 +532,10 @@ ata/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Users/xy
 c93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/
 Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10
 .pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/
-symbols/msbm10.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/pu
-blic/amsfonts/symbols/msbm7.pfb>
-Output written on main.pdf (12 pages, 317487 bytes).
+symbols/msbm10.pfb>
+Output written on main.pdf (13 pages, 310520 bytes).
 PDF statistics:
- 265 PDF objects out of 1000 (max. 8388607)
+ 264 PDF objects out of 1000 (max. 8388607)
  56 named destinations out of 1000 (max. 500000)
  57 words of extra memory for PDF output out of 10000 (max. 10000000)
 

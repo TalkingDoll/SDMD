@@ -30,19 +30,18 @@ A list of all the notation and relevant definition:
 	
 	\item $\Phi^{t}$: Transformation map/flow
 	
+	\item $m$: Number of (i.i.d.) data points
+	
+	\item $n,t=\frac{1}{n}$: sampling frequency and time step between two data snapshots
+	
+	\item $N$: Dictionary size
+	
 	\item $\Psi = \{\psi_i\}_{i=1}^N$: Dictionary or set of basis functions \\
 	Each $\psi_i \in \mathcal{F}\coloneqq L^2(\Omega, \mu)$
 	
 	\item $\mathcal{P}_{N}$: Projection onto the subspace $\mathcal{F}_N \coloneqq \text{span}\{\psi_1. \dots, \psi_N\}\subset\mathcal{F}$
 	
 	\item $\mathcal{P}_{\mathcal{D}_N}$: Projection of $\mathcal{D}$ onto $\mathcal{F}_N$ using the inner product on $\mathcal{D}$
-	
-	
-	\item $m$: Number of (i.i.d.) data points
-	
-	\item $N$: Dictionary size
-	
-	\item $n,t=\frac{1}{n}$: sampling frequency and time step between two data snapshots
 	
 	\item Data(i.i.d.) snapshots:
 	\[
@@ -437,33 +436,7 @@ where $A_N = \Psi_X^{\dagger}\mathcal{L}\Psi_X$. In other words,
 $$
 \lim_{n\to\infty} \mathcal{A}_{N,n} f = \mathcal{A}_N f
 $$
-where $\mathcal{A}_{N,n}, \mathcal{A}_N$ are the operators whose matrix representation are $A_{N,n}, A_N$ respectively.(\textcolor{red}{Not sure if it is appropriate and necessary to mention $\mathcal{A}_{N,n}, \mathcal{A}_N$ here. If yes, do we need to define the domain for these operators?})
-
-Next, by Trotter-Kato Approximation theorem, we have 
-$$\lim_{n\to\infty} \mathbf{\Psi}_N K_{N,n} \mathbf{a} = \mathbf{\Psi}_N K_N \mathbf{a}$$ 
-where $K_{N,n}(t) = e^{t A_{N,n}}, K_{N}(t) = e^{t A_N}$. In other words, we have
-$$
-\lim_{n\to\infty}\mathcal{K}_{N,n}(t) f = \mathcal{K}_{N}(t) f
-$$ where $\mathcal{K}_{N,n}(t)\coloneqq e^{t \mathcal{A}_{N,n}}, \mathcal{K}_{N}(t)\coloneqq e^{t \mathcal{A}_N}$.
-
-\subsection*{First Trotter--Kato Approximation Theorem.} 
-\textit{(Trotter 1958, Kato 1959)}. Let $(T(t))_{t\geq0}$ and $(T_n(t))_{t\geq0}$, $n \in \mathbb{N}$, be strongly continuous semigroups on $X$ with generators $\mathcal{A}$ and $\mathcal{A}_n$, respectively, and assume that they satisfy the estimate
-\[
-\|T(t)\|, \|T_n(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, n \in \mathbb{N},
-\]
-and some constants $M \geq 1$, $w \in \mathbb{R}$. Take $\mathcal{D}$ to be a core for $\mathcal{A}$ and consider the following assertions.
-\begin{itemize}
-		\item[(a)] $\mathcal{D} \subset \mathcal{D}(\mathcal{A}_n)$ for all $n \in \mathbb{N}$ and $\mathcal{A}_n x \to \mathcal{A} x$ for all $x \in \mathcal{D}$.
-		\item[(b)] For each $x \in \mathcal{D}$, there exists $x_n \in \mathcal{D}(\mathcal{A}_n)$ such that $x_n \to x$ and $\mathcal{A}_n x_n \to \mathcal{A} x$.
-		\item[(c)] $R(\lambda, \mathcal{A}_n)x \to R(\lambda, \mathcal{A})x$ for all $x \in X$ and some/all $\lambda > w$.
-		\item[(d)] $T_n(t)x \to T(t)x$ for all $x \in X$, uniformly for $t$ in compact intervals.
-	\end{itemize}
-Then the implications
-\[
-\text{(a)} \implies \text{(b)} \iff \text{(c)} \iff \text{(d)}
-\]
-hold, while $(b)$ does not imply $(a)$.
-
+where $\mathcal{A}_{N,n}, \mathcal{A}_N$ are the operators whose matrix representation are $A_{N,n}, A_N$ respectively.
 
 
 
@@ -475,64 +448,46 @@ In this section, we want to show that $\mathcal{P}_N\mathcal{A}|_{\mathcal{F}_N}
 
 \subsection{Convergence of \(\mathcal{A}_N\) to \(\mathcal{A}\) (in the \(L^2\) norm)}
 
-\begin{definition}
-	% Operator A and its domain
-	$\mathcal{A}: \text{ operator of interest}$
-	$\mathcal{D} := \{f \in \mathcal{F} : \mathcal{A}f \in \mathcal{F}\}$
-	
-	% State space and function space
-	$(\mathbb{X}, \mathcal{B}, \mu): \text{ state space}$
-	$\mathcal{F} := L^2(\mathbb{X}, \mu)$
-	
-	% Closed operator definition
-	$\text{Graph of } \mathcal{A}: \{(f, \mathcal{A}f) \in \mathcal{F} \times \mathcal{F} : f \in \mathcal{D}\}$
-	
-	% Inner product and norm in D
-	$\langle f, g \rangle_\mathcal{D} := \langle f, g \rangle_\mathcal{F} + \langle \mathcal{A}f, \mathcal{A}g \rangle_\mathcal{F}$
-	$\|f\|^2 := \langle f, f \rangle_\mathcal{D}, \quad \forall f, g \in \mathcal{D}$
-	
-	% Properties of A
-	$\|\mathcal{A}\| \leq 1$
-	$\|f\|_\mathcal{F} \leq \|f\|_\mathcal{D}$
-	
-	% Special cases
-	$\text{If } \mathcal{A} \text{ is continuous on } \mathcal{F}, \text{ then } \mathcal{D} = \mathcal{F}$
-	
-	% Weighted Sobolev space
-	$\mathcal{D} = H^k(\mathbb{X}, \mu): \text{ weighted Sobolev space}$
-	$\|\psi\|_{H^k(\mathbb{X},\mu)} = \sum_{|\alpha|\leq k} \left(\int_\mathbb{X} |D^\alpha \psi|^2 d\mu\right)^{1/2}$
-	
-	% Special cases for D
-	$\text{If } \mathcal{A} \text{ is generator of a stochastic process: } \mathcal{D} = H^2(\mathbb{X}, \mu)$
-	$\text{If system is deterministic: } \mathcal{D} = H^1(\mathbb{X}, \mu)$
-\end{definition}
+We begin by considering the state space \( (\Omega, \mathcal{B}, \mu) \), where the set of observables is given by \( \mathcal{F} := L^2(\Omega, \mu) \). The domain of the operator \( \mathcal{A} \) is defined as:
 
-We denote the operator of interest by \( A \), which can represent various operators, such as \( K \), \( K^t \), \( L \), or \( L^* \), in discrete or continuous time. We consider the state space \( (X, \mathcal{B}, \mu) \) and let \( \mathcal{F} := L^2(X, \mu) \). The observables on which \( A \) acts define the domain of \( A \), i.e.,
 \[
-D := \{ f \in \mathcal{F} : A f \in \mathcal{F} \}.
+\mathcal{D} := \{ f \in \mathcal{F} : \mathcal{A} f \in \mathcal{F} \}.
 \]
 
-The operator \( A \) is said to be a \textit{closed operator} if the graph of \( A \),
-\[
-\{ (f, A f) \in \mathcal{F} \times \mathcal{F} : f \in D \},
-\]
-is a closed subspace of \( \mathcal{F} \times \mathcal{F} \). If \( A \) is closed, then \( D \) is a Hilbert space with the inner product
-\[
-\langle f, g \rangle_D := \langle f, g \rangle_{\mathcal{F}} + \langle A f, A g \rangle_{\mathcal{F}}, \quad \forall f, g \in D,
-\]
-and norm
-\[
-\| f \|_D^2 := \langle f, f \rangle_D.
-\]
-A direct consequence of this definition is that \( \| f \|_{\mathcal{F}} \leq \| f \|_D \) and that \( A : D \to \mathcal{F} \) is a continuous operator with \( \| A \| \leq 1 \).
+The operator \( \mathcal{A} \) is referred to as a \textit{closed operator} if the graph of \( \mathcal{A} \), defined by:
 
-In practice, there are two main cases. If \( A \) is continuous on \( \mathcal{F} \), then \( D = \mathcal{F} \) and the norms \( \| \cdot \|_D \) and \( \| \cdot \|_{\mathcal{F}} \) are equivalent. Otherwise, \( A \) is typically the infinitesimal generator of a strongly continuous semigroup, and \( D \) will be dense in \( \mathcal{F} \). 
+\[
+\{ (f, \mathcal{A} f) \in \mathcal{F} \times \mathcal{F} : f \in \mathcal{D} \},
+\]
 
-A common example is where \( D \) is a weighted Sobolev space \( H^k(X, \mu) \) containing all measurable functions \( \psi : X \to \mathbb{R} \) with finite norm:
+is a closed subspace of \( \mathcal{F} \times \mathcal{F} \). In this context, if \( \mathcal{A} \) is closed, then \( \mathcal{D} \) becomes a Hilbert space equipped with the inner product:
+
+\[
+\langle f, g \rangle_\mathcal{D} := \langle f, g \rangle_{\mathcal{F}} + \langle \mathcal{A} f, \mathcal{A} g \rangle_{\mathcal{F}}, \quad \forall f, g \in \mathcal{D},
+\]
+
+and the corresponding norm:
+
+\[
+\| f \|_\mathcal{D}^2 := \langle f, f \rangle_\mathcal{D}.
+\]
+
+It follows directly from this structure that \( \| f \|_{\mathcal{F}} \leq \| f \|_\mathcal{D} \), and the operator \( \mathcal{A} : \mathcal{D} \to \mathcal{F} \) is continuous with \( \| \mathcal{A} \| \leq 1 \).
+
+In practice, two common cases arise:
+
+1. If \( \mathcal{A} \) is continuous on \( \mathcal{F} \): In this scenario, the domain \( \mathcal{D} = \mathcal{F} \), and the norms \( \| \cdot \|_\mathcal{D} \) and \( \| \cdot \|_{\mathcal{F}} \) are equivalent.
+
+2. If \( \mathcal{A} \) is the infinitesimal generator of a strongly continuous semigroup: Here, \( \mathcal{D} \) is typically dense in \( \mathcal{F} \).
+
+An illustrative example occurs when \( \mathcal{D} \) is a weighted Sobolev space \( H^k(X, \mu) \), containing all measurable functions \( \psi: X \to \mathbb{R} \) with finite norm:
+
 \[
 \| \psi \|_{H^k(X, \mu)} = \left( \sum_{|\alpha| \leq k} \int_X |D^\alpha \psi|^2 \, d\mu \right)^{1/2},
 \]
-where \( D^\alpha \) is the weak derivative of order \( \alpha \). For example, if \( A \) is the generator of a stochastic process, then \( D = H^2(X, \mu) \). If the system is deterministic, then \( D = H^1(X, \mu) \).
+
+where \( D^\alpha \psi \) represents the weak derivative of order \( \alpha \). For instance, if \( \mathcal{A} \) is the generator of a stochastic process, then \( \mathcal{D} = H^2(X, \mu) \). Conversely, if the system is deterministic, the domain is typically \( \mathcal{D} = H^1(X, \mu) \).
+
 
 
 
@@ -579,11 +534,7 @@ where \( D^\alpha \) is the weak derivative of order \( \alpha \). For example, 
 	\begin{align*}
 		\| \mathcal{A}_N \mathcal{P}_{\mathcal{D}_N} f - \mathcal{A} f \|_{\mathcal{F}} &\leq \| (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} f \|_{\mathcal{F}} + \| (\mathcal{P}_N - \mathrm{Id}) \mathcal{A} \| \| \mathcal{P}_{\mathcal{D}_N} f - f \|_{\mathcal{D}} \\
 		&\quad + \| \mathcal{A} \| \| \mathcal{P}_{\mathcal{D}_N} f - f \|_{\mathcal{D}} \to 0.
-	\end{align*}
-	
-	
-	
-	
+	\end{align*}	
 \end{proof}
 
 
@@ -593,7 +544,23 @@ where \( D^\alpha \) is the weak derivative of order \( \alpha \). For example, 
 
 Outline: make suitable assumptions(Koopman operators are exponentially bounded) and use Trotter-Kato Approximation theorem to show the convergence.
 
-
+\subsection*{First Trotter--Kato Approximation Theorem.} 
+\textit{(Trotter 1958, Kato 1959)}. Let $(T(t))_{t\geq0}$ and $(T_n(t))_{t\geq0}$, $n \in \mathbb{N}$, be strongly continuous semigroups on $X$ with generators $\mathcal{A}$ and $\mathcal{A}_n$, respectively, and assume that they satisfy the estimate
+\[
+\|T(t)\|, \|T_n(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, n \in \mathbb{N},
+\]
+and some constants $M \geq 1$, $w \in \mathbb{R}$. Take $\mathcal{D}$ to be a core for $\mathcal{A}$ and consider the following assertions.
+\begin{itemize}
+	\item[(a)] $\mathcal{D} \subset \mathcal{D}(\mathcal{A}_n)$ for all $n \in \mathbb{N}$ and $\mathcal{A}_n x \to \mathcal{A} x$ for all $x \in \mathcal{D}$.
+	\item[(b)] For each $x \in \mathcal{D}$, there exists $x_n \in \mathcal{D}(\mathcal{A}_n)$ such that $x_n \to x$ and $\mathcal{A}_n x_n \to \mathcal{A} x$.
+	\item[(c)] $R(\lambda, \mathcal{A}_n)x \to R(\lambda, \mathcal{A})x$ for all $x \in X$ and some/all $\lambda > w$.
+	\item[(d)] $T_n(t)x \to T(t)x$ for all $x \in X$, uniformly for $t$ in compact intervals.
+\end{itemize}
+Then the implications
+\[
+\text{(a)} \implies \text{(b)} \iff \text{(c)} \iff \text{(d)}
+\]
+hold, while $(b)$ does not imply $(a)$.
 
 
 
