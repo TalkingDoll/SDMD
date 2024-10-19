@@ -443,50 +443,36 @@ where $\mathcal{A}_{N,n}, \mathcal{A}_N$ are the operators whose matrix represen
 
 \newpage
 \section{Convergence in large dictionary size $N$}
-In this section, we want to show that $\mathcal{P}_N\mathcal{A}|_{\mathcal{F}_N} = \mathcal{A}_N \to \mathcal{A}$ in strong operator topology as $N \to \infty$, under a similar mathematical framework established in gEDMD analysis \href{https://arxiv.org/abs/2405.00539}{paper} . In addition, if we can assume the $\{\mathcal{K}_{N}(t)\}_{N\geq 1}, \mathcal{K}(t)$ is exponentially bounded for all $t\geq 0$, then we can use the Trotter-Kato Approximation theorem to obtain $\mathcal{P}_N\mathcal{K}(t)|_{\mathcal{F}_N} = \mathcal{K}_{N}(t) \to \mathcal{K}(t)$ in strong operator topology as $N \to \infty$, uniformly for $t$ in a compact interval.
+In this section, we want to show that $\mathcal{P}_N\mathcal{A}|_{\mathcal{F}_N} = \mathcal{A}_N \to \mathcal{A}$ in strong operator topology as $N \to \infty$, under a similar mathematical framework established in gEDMD analysis \href{https://arxiv.org/abs/2405.00539}{paper} . In addition, if we can assume the $\{\mathcal{K}_{N}(t)\}_{N\geq 1}, \mathcal{K}(t)$ is exponentially bounded for all $t\geq 0$, then we can use the Trotter-Kato Approximation theorem to obtain $e^{t\mathcal{A}_N} \to e^{t\mathcal{A}}$ in strong operator topology as $N \to \infty$, uniformly for $t$ in a compact interval.
 
 
-\subsection{Convergence of \(\mathcal{A}_N\) to \(\mathcal{A}\) (in the \(L^2\) norm)}
+\subsection{Convergence of \(\mathcal{A}_N\) to \(\mathcal{A}\)}
 
-We begin by considering the state space \( (\Omega, \mathcal{B}, \mu) \), where the set of observables is given by \( \mathcal{F} := L^2(\Omega, \mu) \). The domain of the operator \( \mathcal{A} \) is defined as:
-
+Consider the state space \( (\Omega, \mathcal{B}, \mu) \), where the set of observables is given by \( \mathcal{F} := L^2(\Omega, \mu) \). The domain of the operator \( \mathcal{A} \) is defined as:
 \[
 \mathcal{D} := \{ f \in \mathcal{F} : \mathcal{A} f \in \mathcal{F} \}.
 \]
-
 The operator \( \mathcal{A} \) is referred to as a \textit{closed operator} if the graph of \( \mathcal{A} \), defined by:
-
 \[
 \{ (f, \mathcal{A} f) \in \mathcal{F} \times \mathcal{F} : f \in \mathcal{D} \},
 \]
-
 is a closed subspace of \( \mathcal{F} \times \mathcal{F} \). In this context, if \( \mathcal{A} \) is closed, then \( \mathcal{D} \) becomes a Hilbert space equipped with the inner product:
-
 \[
 \langle f, g \rangle_\mathcal{D} := \langle f, g \rangle_{\mathcal{F}} + \langle \mathcal{A} f, \mathcal{A} g \rangle_{\mathcal{F}}, \quad \forall f, g \in \mathcal{D},
 \]
-
 and the corresponding norm:
-
 \[
 \| f \|_\mathcal{D}^2 := \langle f, f \rangle_\mathcal{D}.
 \]
-
 It follows directly from this structure that \( \| f \|_{\mathcal{F}} \leq \| f \|_\mathcal{D} \), and the operator \( \mathcal{A} : \mathcal{D} \to \mathcal{F} \) is continuous with \( \| \mathcal{A} \| \leq 1 \).
 
-In practice, two common cases arise:
+In practice, if \( \mathcal{A} \) is the infinitesimal generator of a strongly continuous semigroup, \( \mathcal{D} \) is dense in \( \mathcal{F} \).
 
-1. If \( \mathcal{A} \) is continuous on \( \mathcal{F} \): In this scenario, the domain \( \mathcal{D} = \mathcal{F} \), and the norms \( \| \cdot \|_\mathcal{D} \) and \( \| \cdot \|_{\mathcal{F}} \) are equivalent.
-
-2. If \( \mathcal{A} \) is the infinitesimal generator of a strongly continuous semigroup: Here, \( \mathcal{D} \) is typically dense in \( \mathcal{F} \).
-
-An illustrative example occurs when \( \mathcal{D} \) is a weighted Sobolev space \( H^k(X, \mu) \), containing all measurable functions \( \psi: X \to \mathbb{R} \) with finite norm:
-
+An example is that when \( \mathcal{D} \) is a weighted Sobolev space \( H^2(\Omega, \mu) \), containing all measurable functions \( \psi: \Omega \to \mathbb{R} \) with finite norm:
 \[
-\| \psi \|_{H^k(X, \mu)} = \left( \sum_{|\alpha| \leq k} \int_X |D^\alpha \psi|^2 \, d\mu \right)^{1/2},
+\| \psi \|_{H^2(X, \mu)} = \left( \sum_{|\alpha| \leq 2} \int_\Omega |D^\alpha \psi|^2 \, d\mu \right)^{1/2},
 \]
-
-where \( D^\alpha \psi \) represents the weak derivative of order \( \alpha \). For instance, if \( \mathcal{A} \) is the generator of a stochastic process, then \( \mathcal{D} = H^2(X, \mu) \). Conversely, if the system is deterministic, the domain is typically \( \mathcal{D} = H^1(X, \mu) \).
+where \( D^\alpha \psi \) represents the weak derivative of order \( \alpha \). 
 
 
 
@@ -540,10 +526,34 @@ where \( D^\alpha \psi \) represents the weak derivative of order \( \alpha \). 
 
 
 
-\subsection{Convergence of \(\mathcal{K}_N(t)\) to \(\mathcal{K}(t)\) (in the \(L^2\) norm)}
+\subsection{Convergence of \(\mathcal{K}_N(t)\) to \(\mathcal{K}(t)\)}
 
-Outline: make suitable assumptions(Koopman operators are exponentially bounded) and use Trotter-Kato Approximation theorem to show the convergence.
+Define the semigroup generated by $\{\mathcal{A}_N\}_{N \geq 1}$ and $\mathcal{A}$:
+$$
+\mathcal{K}_N(t) \coloneqq e^{t\mathcal{A}_N}, \quad \mathcal{K}(t) \coloneqq e^{t\mathcal{A}}
+$$
+and assume that 
+$$
+\|\mathcal{K}_N(t)\|, \|\mathcal{K}(t)\| \leq Me^{wt} \quad \textrm{for all } t\geq0, N\in\mathbb{N}
+$$
+and some constants $M \geq 1$, $w \in \mathbb{R}$.
 
+\begin{corollary}
+	Let $(\mathcal{K}_N(t))_{t\geq0}$ and $(\mathcal{K}(t))_{t\geq0}$ be strongly continuous semigroups on a Banach space $\Omega$ with generators $\mathcal{A}_N$ and $\mathcal{A}$, respectively. Assume that for some constants $M \geq 1$, $w \in \mathbb{R}$, the semigroups satisfy
+	\[
+	\|\mathcal{K}_N(t)\|, \|\mathcal{K}(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, N \in \mathbb{N}.
+	\]
+	Furthermore, assume that for each $x \in \mathcal{D}(\mathcal{A})$, $\mathcal{A}_N x \to \mathcal{A} x$ as $N \to \infty$. Then 
+	$$
+	\mathcal{K}_N(t) \to \mathcal{K}(t)
+	$$
+	in the strong operator topology, uniformly for $t$ in compact intervals.
+\end{corollary}
+\begin{proof}
+	By applying the First Trotter--Kato Approximation Theorem, the convergence result follows directly.
+\end{proof}
+	
+	
 \subsection*{First Trotter--Kato Approximation Theorem.} 
 \textit{(Trotter 1958, Kato 1959)}. Let $(T(t))_{t\geq0}$ and $(T_n(t))_{t\geq0}$, $n \in \mathbb{N}$, be strongly continuous semigroups on $X$ with generators $\mathcal{A}$ and $\mathcal{A}_n$, respectively, and assume that they satisfy the estimate
 \[
