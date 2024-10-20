@@ -498,7 +498,7 @@ The above content is summarized in the next theorem:
 		\end{bmatrix} \\
 		&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
 		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \\
-		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
+		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
 		&\leq \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
 		&= \lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) = 0.
 	\end{align*}
