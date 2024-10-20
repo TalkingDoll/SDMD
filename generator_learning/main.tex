@@ -129,7 +129,7 @@ where $\mathcal{L}\mathbf{\Psi}_N(x) = \left[ \mathcal{L}\mathbf{\psi}_1(x), \do
 	\mathcal{L}\psi_j(x) = b(x)\cdot \nabla\psi_j(x) + \frac{1}{2}\sigma^2(x)\colon \nabla^2 \psi_j(x)
 \end{equation}
 \begin{remark}
-	We can get explicit higher order term $O(t^2)$ in \eqref{taylor_t} by applying It\^{o}'s formula recursively. See \ref{expansion_Ito_formula} for more details. Or we can simply apply Taylor expansion here to obtain $O(t^2)$jk.
+	We can get explicit higher order term $O(t^2)$ in \eqref{taylor_t} by applying It\^{o}'s formula recursively. See \ref{expansion_Ito_formula} for more details. Or we can simply apply Taylor expansion here to obtain $O(t^2)$.
 \end{remark}
 \begin{remark}
 	In order to obtain \eqref{Ito_formula_generator}, we can use It\^{o}'s formula. From It\^{o}'s formula, we know that given $f\in C_b^2(\Omega)$ and $X_0=x$,
@@ -272,9 +272,6 @@ where $G = \frac{1}{m}\Psi_X^* \Psi_X$ and $A = \frac{1}{m}\Psi_X^* \mathcal{L}\
 \end{proof}
 
 
-\newpage
-\section{Convergence in zero-limit of sampling time}
-Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct the matrix $A_{N,n}$, which is the matrix representation of the projected Koopman generators $\mathcal{A}_{N,n}$ and find its limit in strong operator topology. 
 
 %	\newpage
 %	\subsection{(\textcolor{red}{Fail}) Convergence of the generator approximant $\mathcal{A}_n$}
@@ -376,8 +373,12 @@ Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We wil
 %		where $\mathcal{K}_{N}(t)$ is a (continuous time) semigroup projected by $\mathcal{P}_{N}$.
 %	\end{remark}
 
-
 %	Let $\mathcal{A}$ be the Koopman generator and $\mathcal{A}_N \coloneqq \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$ where $\mathcal{F}_N$ is the subspace spanned by the dictionary functions $\{\psi_i\}_{i=1}^N$. For each $N>0$, let $\{\mathcal{A}_{N,n}\}_{n\geq 1}$ be a sequence of operator with its matrix representation defined in the following:
+
+
+\newpage
+\section{Convergence in zero-limit of sampling time}
+Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct the matrix $A_{N,n}$, which is the matrix representation of the discrete projected Koopman generators $\mathcal{A}_{N,n}$ and find its limit in strong operator topology. 
 
 First, for each $N>0$, construct the following sequence of matrices $\{A_{N,n}\}_{n\geq 1}$:
 \begin{align*}
@@ -426,7 +427,7 @@ Now, we consider the second term:
 	\end{bmatrix} \\
 	&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
 	&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \\
-	&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
+	&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
 	&\leq \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
 	&= \lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) = 0.
 \end{align*}
@@ -440,7 +441,72 @@ $$
 $$
 where $\mathcal{A}_N = \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$.
 
+The above content is summarized in the next theorem:
 
+\begin{theorem}
+	 For each $N>0$, let $\mathcal{A}_N = \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$ be the projected Koopman generator with its matrix representation $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$ and $\mathcal{A}_{N,n}$ be the discrete projected Koopman generator with its matrix representation $A_{N,n}$ defined in the following: 
+	 \begin{equation*}
+	 	A_{N,n} \coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}}
+	 \end{equation*}
+	 Then, $\mathcal{A}_{N,n} \to \mathcal{A}_N$ in strong operator topology as $n\to\infty$.
+\end{theorem}
+\begin{proof}
+	\begin{align*}
+		A_{N,n} &\coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}} \\
+		&= \frac{ \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
+		&= \frac{ \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}} \\
+		&= \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})
+	\end{align*}
+	\begin{remark}
+		Here the first term $\Psi_X^{\dagger}\mathcal{L}\Psi_X$ is not dependent on $n$ since we choose the basis functions manually.
+	\end{remark}
+	Choose $f = \mathbf{\Psi}_N\mathbf{a} \in C_b^2(\Omega)$, then we have
+	\begin{align*}
+		%	&\quad \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
+		%	&= \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\sum_{i=1}^N \psi_i a_i\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
+		&\quad \lim_{n\to\infty} \mathcal{A}_{N,n}f \\
+		&= \lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
+		&= \lim_{n\to\infty} \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
+		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
+		&= \mathbf{\Psi}_N A_N \mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}
+	\end{align*}
+	Now, we consider the second term:
+	\begin{align*}
+		&\quad \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
+		&= \lim_{n\to\infty} 
+		\begin{bmatrix}
+			\psi_1 & \cdots & \psi_N
+		\end{bmatrix}
+		\begin{bmatrix}
+			O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n}) \\
+			\vdots & \ddots & \vdots \\
+			O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n})
+		\end{bmatrix}
+		\begin{bmatrix}
+			a_1 \\
+			\vdots \\
+			a_N
+		\end{bmatrix} \\
+		&= \lim_{n\to\infty} 
+		\begin{bmatrix}
+			\psi_1 & \cdots & \psi_N
+		\end{bmatrix}
+		\begin{bmatrix}
+			a_1' \\
+			\vdots \\
+			a_N'
+		\end{bmatrix} \\
+		&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
+		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \\
+		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
+		&\leq \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
+		&= \lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) = 0.
+	\end{align*}
+	Therefore, for $f=\mathbf{\Psi}_N\mathbf{a}$, we have
+	$$
+	\lim_{n\to\infty} \mathcal{A}_{N,n}f = \lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a} = \mathcal{A}_N f.
+	$$
+\end{proof}
 
 
 \newpage
