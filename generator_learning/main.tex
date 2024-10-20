@@ -36,12 +36,11 @@ A list of all the notation and relevant definition:
 	
 	\item $N$: Dictionary size
 	
-	\item $\Psi = \{\psi_i\}_{i=1}^N$: Dictionary or set of basis functions \\
-	Each $\psi_i \in \mathcal{F}\coloneqq L^2(\Omega, \mu)$
+	\item $\Psi = \{\psi_i\}_{i=1}^N$: Dictionary or set of basis functions
 	
-	\item $\mathcal{P}_{N}$: Projection onto the subspace $\mathcal{F}_N \coloneqq \text{span}\{\psi_1. \dots, \psi_N\}\subset\mathcal{F}$
+	\item $\mathcal{F}\coloneqq L^2(\Omega, \mu), \ \mathcal{F}_N \coloneqq \text{span}\{\psi_1. \dots, \psi_N\}\subset\mathcal{F}$
 	
-	\item $\mathcal{P}_{\mathcal{D}_N}$: Projection of $\mathcal{D}$ onto $\mathcal{F}_N$ using the inner product on $\mathcal{D}$
+	\item $\mathcal{P}_{N}$: Projection onto the subspace $\mathcal{F}_N$
 	
 	\item Data(i.i.d.) snapshots:
 	\[
@@ -85,7 +84,7 @@ A list of all the notation and relevant definition:
 		
 	\item Definition of Koopman operator in deterministic system:
 	$$\mathcal{K}f = f\circ\Phi$$
-	Definition of stochastic Koopman operator(\textbf{semigroup}):
+	Definition of stochastic Koopman operator (semigroup):
 	$$\mathcal{K}^{t}f = \mathbb{E}[f\circ\Phi^{t}]$$
 	Remark: In the deterministic system, we can still use $\mathcal{K}^t,\Phi^t$ where $t$ is the (fixed) time interval between two sampling snapshots.
 	\item Definition of Koopman generator:
@@ -113,7 +112,7 @@ where $\dagger$ is the pseudoinverse and $G=\frac{1}{m}\Psi_X^T\Psi_X, A=\frac{1
 \end{remark}
 
 \subsection*{S-EDMD framework}
-First, we can expand the Koopman operator(semigroup) $\mathcal{K}(t)$ similar as in EDMD:
+First, we can expand the Koopman operator (semigroup) $\mathcal{K}(t)$ similar as in EDMD:
 \begin{align}\label{edmd_expansion}
 	\mathcal{K}(t) f(x) 
 	&= \mathbb{E}[f(y)] \notag\\
@@ -130,7 +129,7 @@ where $\mathcal{L}\mathbf{\Psi}_N(x) = \left[ \mathcal{L}\mathbf{\psi}_1(x), \do
 	\mathcal{L}\psi_j(x) = b(x)\cdot \nabla\psi_j(x) + \frac{1}{2}\sigma^2(x)\colon \nabla^2 \psi_j(x)
 \end{equation}
 \begin{remark}
-	We can get explicit higher order term $O(t^2)$ in \eqref{taylor_t} by applying It\^{o}'s formula recursively. See \ref{expansion_Ito_formula} for more details.
+	We can get explicit higher order term $O(t^2)$ in \eqref{taylor_t} by applying It\^{o}'s formula recursively. See \ref{expansion_Ito_formula} for more details. Or we can simply apply Taylor expansion here to obtain $O(t^2)$jk.
 \end{remark}
 \begin{remark}
 	In order to obtain \eqref{Ito_formula_generator}, we can use It\^{o}'s formula. From It\^{o}'s formula, we know that given $f\in C_b^2(\Omega)$ and $X_0=x$,
@@ -176,18 +175,15 @@ Now, we will show that the computed $K_{N,n,m}$ by our S-EDMD method converges n
 (1) i.i.d. data:
 \begin{align*}
 	&\quad P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) \\
-	&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi_X} \big) - \Psi_X^{\dagger}\mathbb{E}[\Psi_Y] \Vert_F > \epsilon \right) \\
-	&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - \Psi_X^{\dagger} \big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
+	&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi_X} \big) - \Psi_X^{\dagger}\big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
 	&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - t\Psi_X^{\dagger}\mathcal{L}\Psi_{X} + O(t^2) \Vert_F > \epsilon \right) \\
 	&\leq P\left( t\Vert \widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - \Psi_X^{\dagger}\mathcal{L}\Psi_{X} \Vert_F + O(t^2) > \epsilon \right) \\
-	&= P\left( t\Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F + O(t^2) > \epsilon \right) \\
+	&= P\left( t\Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F + O(t^2) > \epsilon \right)
 \end{align*}
 where $G = \frac{1}{m}\Psi_X^* \Psi_X$ and $A = \frac{1}{m}\Psi_X^* \mathcal{L}\Psi_{X}$.
 % (2) ergodic sampling data:
 
-(From Wiki)
-
-A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfies the \textit{bounded differences property} if substituting the value of the $i$th coordinate $x_i$ changes the value of $f$ by at most $c_i$. More formally, if there are constants $c_1, c_2, \ldots, c_n$ such that for all $i \in [n]$, and all $x_1 \in \mathcal{X}_1, x_2 \in \mathcal{X}_2, \ldots, x_n \in \mathcal{X}_n$,
+(From Wiki) A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfies the \textit{bounded differences property} if substituting the value of the $i$th coordinate $x_i$ changes the value of $f$ by at most $c_i$. More formally, if there are constants $c_1, c_2, \ldots, c_n$ such that for all $i \in [n]$, and all $x_1 \in \mathcal{X}_1, x_2 \in \mathcal{X}_2, \ldots, x_n \in \mathcal{X}_n$,
 \[
 \sup_{x_i' \in \mathcal{X}_i} |f(x_1, \ldots, x_{i-1}, x_i, x_{i+1}, \ldots, x_n) - f(x_1, \ldots, x_{i-1}, x_i', x_{i+1}, \ldots, x_n)| \leq c_i.
 \]
@@ -278,7 +274,7 @@ A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal
 
 \newpage
 \section{Convergence in zero-limit of sampling time}
-Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct a sequence of generator approximant $\{A_{N,n}\}_{n\geq 1}$ and find its limit as $n\to\infty$, if the limit exists in some sense. Once we find the limit, we can create the continuous time $N$-dimensional Koopman semigroup. 
+Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct the matrix $A_{N,n}$, which is the matrix representation of the projected Koopman generators $\mathcal{A}_{N,n}$ and find its limit in strong operator topology. 
 
 %	\newpage
 %	\subsection{(\textcolor{red}{Fail}) Convergence of the generator approximant $\mathcal{A}_n$}
@@ -382,26 +378,30 @@ Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We wil
 
 
 %	Let $\mathcal{A}$ be the Koopman generator and $\mathcal{A}_N \coloneqq \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$ where $\mathcal{F}_N$ is the subspace spanned by the dictionary functions $\{\psi_i\}_{i=1}^N$. For each $N>0$, let $\{\mathcal{A}_{N,n}\}_{n\geq 1}$ be a sequence of operator with its matrix representation defined in the following:
-First, for each $N>0$, construct the following sequence of matrices:
+
+First, for each $N>0$, construct the following sequence of matrices $\{A_{N,n}\}_{n\geq 1}$:
 \begin{align*}
 	A_{N,n} &\coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}} \\
 	&= \frac{ \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
 	&= \frac{ \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}} \\
-	&= \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n}) \\
-	&\quad (\text{Here the first term is not dependent on $n$})
+	&= \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})
 \end{align*}
-Next, choose $f = \mathbf{\Psi}_N\mathbf{a} \in C_b^2(\Omega)$, we have
+\begin{remark}
+	Here the first term $\Psi_X^{\dagger}\mathcal{L}\Psi_X$ is not dependent on $n$ since we choose the basis functions manually.
+\end{remark}
+Choose $f = \mathbf{\Psi}_N\mathbf{a} \in C_b^2(\Omega)$, then we have
 \begin{align*}
 %	&\quad \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
 %	&= \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\sum_{i=1}^N \psi_i a_i\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
-	&\quad \|\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n}\mathbf{a}\| \\
-	&= \|\lim_{n\to\infty} \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a}\| \\
-	&= \|\mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
+	&\quad \lim_{n\to\infty} \mathcal{A}_{N,n}f \\
+	&= \lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
+	&= \lim_{n\to\infty} \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
+	&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
 \end{align*}
-Then,
+Now, we consider the second term:
 \begin{align*}
-	&\quad \|\lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \\
-	&= \|\lim_{n\to\infty} 
+	&\quad \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
+	&= \lim_{n\to\infty} 
 	\begin{bmatrix}
 		\psi_1 & \cdots & \psi_N
 	\end{bmatrix}
@@ -414,8 +414,8 @@ Then,
 		a_1 \\
 		\vdots \\
 		a_N
-	\end{bmatrix} \| \\
-	&= \|\lim_{n\to\infty} 
+	\end{bmatrix} \\
+	&= \lim_{n\to\infty} 
 	\begin{bmatrix}
 		\psi_1 & \cdots & \psi_N
 	\end{bmatrix}
@@ -423,27 +423,29 @@ Then,
 		a_1' \\
 		\vdots \\
 		a_N'
-	\end{bmatrix} \| \\
+	\end{bmatrix} \\
 	&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
-	&= \|\lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \| \\
-	&= \|\lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \| \\
-	&\leq \|\lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \| \\
-	&= \|\lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) \| = 0
+	&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \\
+	&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
+	&\leq \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
+	&= \lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) = 0.
 \end{align*}
 Therefore, for $f=\mathbf{\Psi}_N\mathbf{a}$, we have
-$$\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a}$$ 
-where $A_N = \Psi_X^{\dagger}\mathcal{L}\Psi_X$. In other words,
 $$
-\lim_{n\to\infty} \mathcal{A}_{N,n} f = \mathcal{A}_N f
+\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a},
+$$ 
+where $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$. In other words,
 $$
-where $\mathcal{A}_{N,n}, \mathcal{A}_N$ are the operators whose matrix representation are $A_{N,n}, A_N$ respectively.
+\lim_{n\to\infty} \mathcal{A}_{N,n} f = \mathcal{A}_N f,
+$$
+where $\mathcal{A}_N = \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$.
 
 
 
 
 \newpage
 \section{Convergence in large dictionary size $N$}
-In this section, we want to show that $\mathcal{P}_N\mathcal{A}|_{\mathcal{F}_N} = \mathcal{A}_N \to \mathcal{A}$ in strong operator topology as $N \to \infty$, under a similar mathematical framework established in gEDMD analysis \href{https://arxiv.org/abs/2405.00539}{paper} . In addition, if we can assume the $\{\mathcal{K}_{N}(t)\}_{N\geq 1}, \mathcal{K}(t)$ is exponentially bounded for all $t\geq 0$, then we can use the Trotter-Kato Approximation theorem to obtain $e^{t\mathcal{A}_N} \to e^{t\mathcal{A}}$ in strong operator topology as $N \to \infty$, uniformly for $t$ in a compact interval.
+In this section, we want to show that $\mathcal{P}_N\mathcal{A}|_{\mathcal{F}_N} = \mathcal{A}_N \to \mathcal{A}$ in strong operator topology as $N \to \infty$, under a similar mathematical framework established in gEDMD analysis \href{https://arxiv.org/abs/2405.00539}{paper} . In addition, if we can assume $e^{t\mathcal{A}_N}, e^{t\mathcal{A}}$ are exponentially bounded for all $t\geq 0, \ N\in\mathbb{N}$, then we can use the Trotter-Kato Approximation theorem to obtain $e^{t\mathcal{A}_N} \to e^{t\mathcal{A}}$ in strong operator topology as $N \to \infty$, uniformly for $t$ in a compact interval.
 
 
 \subsection{Convergence of \(\mathcal{A}_N\) to \(\mathcal{A}\)}
@@ -534,7 +536,7 @@ $$
 $$
 and assume that 
 $$
-\|\mathcal{K}_N(t)\|, \|\mathcal{K}(t)\| \leq Me^{wt} \quad \textrm{for all } t\geq0, N\in\mathbb{N}
+\|\mathcal{K}_N(t)\|, \|\mathcal{K}(t)\| \leq Me^{wt} \quad \textrm{for all } t\geq0, \  N\in\mathbb{N}
 $$
 and some constants $M \geq 1$, $w \in \mathbb{R}$.
 

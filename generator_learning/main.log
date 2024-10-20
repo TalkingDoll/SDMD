@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.5.22)  19 OCT 2024 17:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.5.22)  20 OCT 2024 00:42
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -404,70 +404,77 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 [1
 
 {C:/Users/xyc93/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}] [2]
-Overfull \hbox (0.87865pt too wide) in paragraph at lines 157--159
+Overfull \hbox (0.87865pt too wide) in paragraph at lines 156--158
 \OT1/cmr/m/n/10 where the gen-er-a-tor(time dif-fer-en-tial) ma-trix ap-prox-i-
 ma-tion $[][] = \OMS/cmsy/m/n/10 L\OML/cmm/m/it/10  []\OT1/cmr/m/n/10 (\OML/cmm
 /m/it/10 x[]\OT1/cmr/m/n/10 )$. 
  []
 
-[3] [4] [5] [6]
-Overfull \hbox (6.01134pt too wide) detected at line 257
+[3] [4] [5]
+Overfull \hbox (6.01134pt too wide) detected at line 253
 \U/msb/m/n/10 P [] \OMS/cmsy/m/n/10 ^^T \U/msb/m/n/10 P [] \OT1/cmr/m/n/10 + \U
 /msb/m/n/10 P [] \OML/cmm/m/it/10 ;
  []
 
 
-Overfull \hbox (84.43561pt too wide) detected at line 265
+Overfull \hbox (84.43561pt too wide) detected at line 261
 \OML/cmm/m/it/10 P [] \OMS/cmsy/m/n/10 ^^T \OT1/cmr/m/n/10 2\OML/cmm/m/it/10 N[
 ] []
  []
 
-
-Overfull \hbox (75.77457pt too wide) detected at line 275
+[6]
+Overfull \hbox (75.77457pt too wide) detected at line 271
 []
  []
 
-[7] [8] [9]
+[7]
+Overfull \hbox (4.6384pt too wide) in paragraph at lines 382--383
+[]\OT1/cmr/m/n/10 First, for each $\OML/cmm/m/it/10 N > \OT1/cmr/m/n/10 0$, con
+-struct the fol-low-ing se-quence of ma-tri-ces $\OMS/cmsy/m/n/10 f\OML/cmm/m/i
+t/10 A[]\OMS/cmsy/m/n/10 g[]$\OT1/cmr/m/n/10 : 
+ []
+
+[8] [9]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 445.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 445.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 449.
-
-
-Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 449.
+(hyperref)                removing `math shift' on input line 447.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 449.
+(hyperref)                removing `math shift' on input line 447.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 451.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 451.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 451.
 
 [10]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 529.
+(hyperref)                removing `math shift' on input line 531.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 529.
+(hyperref)                removing `subscript' on input line 531.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 529.
+(hyperref)                removing `math shift' on input line 531.
 
 [11] [12]
-Overfull \hbox (16.66594pt too wide) detected at line 600
+Overfull \hbox (16.66594pt too wide) detected at line 602
 [][]
  []
 
 
-Overfull \hbox (5.83464pt too wide) in paragraph at lines 611--613
+Overfull \hbox (5.83464pt too wide) in paragraph at lines 613--615
 \OT1/cmr/m/n/10 deriva-tives of $\OML/cmm/m/it/10 f$ \OT1/cmr/m/n/10 over time.
  To un-der-stand its or-der, con-sider that if $\U/msb/m/n/10 E []$
  []
@@ -487,7 +494,7 @@ Here is how much of TeX's memory you used:
  33097 multiletter control sequences out of 15000+600000
  569463 words of font info for 79 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,16n,79p,634b,594s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,16n,79p,637b,592s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
 cmbx10.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/ams
 fonts/cm/cmbx12.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/p
@@ -510,7 +517,7 @@ Data/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/x
 yc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C
 :/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols
 /msbm10.pfb>
-Output written on main.pdf (13 pages, 303390 bytes).
+Output written on main.pdf (13 pages, 302882 bytes).
 PDF statistics:
  260 PDF objects out of 1000 (max. 8388607)
  57 named destinations out of 1000 (max. 500000)
