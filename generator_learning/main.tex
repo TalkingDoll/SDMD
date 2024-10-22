@@ -538,12 +538,9 @@ In practice, if \( \mathcal{A} \) is the infinitesimal generator of a strongly c
 
 An example is that when \( \mathcal{D} \) is a weighted Sobolev space \( H^2(\Omega, \mu) \), containing all measurable functions \( \psi: \Omega \to \mathbb{R} \) with finite norm:
 \[
-\| \psi \|_{H^2(X, \mu)} = \left( \sum_{|\alpha| \leq 2} \int_\Omega |D^\alpha \psi|^2 \, d\mu \right)^{1/2},
+\| \psi \|_{H^2(\Omega, \mu)} = \left( \sum_{|\alpha| \leq 2} \int_\Omega |D^\alpha \psi|^2 \, d\mu \right)^{1/2},
 \]
 where \( D^\alpha \psi \) represents the weak derivative of order \( \alpha \). 
-
-
-
 
 \begin{assumption}\label{assumption_1}
 	We assume the following:
@@ -618,27 +615,29 @@ and some constants $M \geq 1$, $w \in \mathbb{R}$.
 	in the strong operator topology, uniformly for $t$ in compact intervals.
 \end{corollary}
 \begin{proof}
-	By applying the First Trotter--Kato Approximation Theorem, the convergence result follows directly.
+	By applying the First Trotter--Kato Approximation Theorem \ref{TK}, the convergence result follows directly.
 \end{proof}
 	
 	
-\subsection*{First Trotter--Kato Approximation Theorem.} 
-\textit{(Trotter 1958, Kato 1959)}. Let $(T(t))_{t\geq0}$ and $(T_n(t))_{t\geq0}$, $n \in \mathbb{N}$, be strongly continuous semigroups on $X$ with generators $\mathcal{A}$ and $\mathcal{A}_n$, respectively, and assume that they satisfy the estimate
-\[
-\|T(t)\|, \|T_n(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, n \in \mathbb{N},
-\]
-and some constants $M \geq 1$, $w \in \mathbb{R}$. Take $\mathcal{D}$ to be a core for $\mathcal{A}$ and consider the following assertions.
-\begin{itemize}
-	\item[(a)] $\mathcal{D} \subset \mathcal{D}(\mathcal{A}_n)$ for all $n \in \mathbb{N}$ and $\mathcal{A}_n x \to \mathcal{A} x$ for all $x \in \mathcal{D}$.
-	\item[(b)] For each $x \in \mathcal{D}$, there exists $x_n \in \mathcal{D}(\mathcal{A}_n)$ such that $x_n \to x$ and $\mathcal{A}_n x_n \to \mathcal{A} x$.
-	\item[(c)] $R(\lambda, \mathcal{A}_n)x \to R(\lambda, \mathcal{A})x$ for all $x \in X$ and some/all $\lambda > w$.
-	\item[(d)] $T_n(t)x \to T(t)x$ for all $x \in X$, uniformly for $t$ in compact intervals.
-\end{itemize}
-Then the implications
-\[
-\text{(a)} \implies \text{(b)} \iff \text{(c)} \iff \text{(d)}
-\]
-hold, while $(b)$ does not imply $(a)$.
+\subsection*{First Trotter--Kato Approximation Theorem}
+\begin{theorem}[Trotter 1958, Kato 1959]\label{TK}
+	Let $(T(t))_{t\geq0}$ and $(T_n(t))_{t\geq0}$, $n \in \mathbb{N}$, be strongly continuous semigroups on $X$ with generators $\mathcal{A}$ and $\mathcal{A}_n$, respectively, and assume that they satisfy the estimate
+	\[
+	\|T(t)\|, \|T_n(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, n \in \mathbb{N},
+	\]
+	and some constants $M \geq 1$, $w \in \mathbb{R}$. Take $\mathcal{D}$ to be a core for $\mathcal{A}$ and consider the following assertions.
+	\begin{itemize}
+		\item[(a)] $\mathcal{D} \subset \mathcal{D}(\mathcal{A}_n)$ for all $n \in \mathbb{N}$ and $\mathcal{A}_n x \to \mathcal{A} x$ for all $x \in \mathcal{D}$.
+		\item[(b)] For each $x \in \mathcal{D}$, there exists $x_n \in \mathcal{D}(\mathcal{A}_n)$ such that $x_n \to x$ and $\mathcal{A}_n x_n \to \mathcal{A} x$.
+		\item[(c)] $R(\lambda, \mathcal{A}_n)x \to R(\lambda, \mathcal{A})x$ for all $x \in X$ and some/all $\lambda > w$.
+		\item[(d)] $T_n(t)x \to T(t)x$ for all $x \in X$, uniformly for $t$ in compact intervals.
+	\end{itemize}
+	Then the implications
+	\[
+	\text{(a)} \implies \text{(b)} \iff \text{(c)} \iff \text{(d)}
+	\]
+	hold, while $(b)$ does not imply $(a)$.
+\end{theorem}
 
 
 

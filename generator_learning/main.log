@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.5.22)  20 OCT 2024 22:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (MiKTeX 24.4) (preloaded format=pdflatex 2024.5.22)  21 OCT 2024 23:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -458,23 +458,23 @@ Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 [11]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 597.
+(hyperref)                removing `math shift' on input line 594.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 597.
+(hyperref)                removing `subscript' on input line 594.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 597.
+(hyperref)                removing `math shift' on input line 594.
 
 [12] [13]
-Overfull \hbox (16.66594pt too wide) detected at line 668
+Overfull \hbox (16.66594pt too wide) detected at line 667
 [][]
  []
 
 
-Overfull \hbox (5.83464pt too wide) in paragraph at lines 679--681
+Overfull \hbox (5.83464pt too wide) in paragraph at lines 678--680
 \OT1/cmr/m/n/10 deriva-tives of $\OML/cmm/m/it/10 f$ \OT1/cmr/m/n/10 over time.
  To un-der-stand its or-der, con-sider that if $\U/msb/m/n/10 E []$
  []
@@ -488,13 +488,13 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: D028790015C4EC4D7D3C9AFD298BF016;1622.
  ) 
 Here is how much of TeX's memory you used:
- 10888 strings out of 474370
- 167935 string characters out of 5740535
+ 10890 strings out of 474370
+ 167948 string characters out of 5740535
  1947754 words of memory out of 5000000
- 33097 multiletter control sequences out of 15000+600000
+ 33098 multiletter control sequences out of 15000+600000
  569463 words of font info for 79 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,16n,79p,637b,592s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 75i,16n,79p,637b,594s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
 cmbx10.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/ams
 fonts/cm/cmbx12.pfb><C:/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/p
@@ -517,9 +517,9 @@ Data/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/x
 yc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti10.pfb><C
 :/Users/xyc93/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols
 /msbm10.pfb>
-Output written on main.pdf (14 pages, 307134 bytes).
+Output written on main.pdf (14 pages, 307282 bytes).
 PDF statistics:
- 265 PDF objects out of 1000 (max. 8388607)
- 59 named destinations out of 1000 (max. 500000)
+ 267 PDF objects out of 1000 (max. 8388607)
+ 60 named destinations out of 1000 (max. 500000)
  57 words of extra memory for PDF output out of 10000 (max. 10000000)
 
