@@ -84,8 +84,12 @@
 		
 		\item Definition of Koopman operator in deterministic system:
 		$$\mathcal{K}f = f\circ\Phi$$
+		where $\Phi$ is the transformation map.
+		
 		Definition of stochastic Koopman operator (semigroup):
-		$$\mathcal{K}^{t}f = \mathbb{E}[f\circ\Phi^{t}]$$
+		$$\mathcal{K}(t)f = \mathbb{E}[f\circ\Phi^{t}]$$
+		where $\Phi^{t}$ is the flow map.
+		
 		Remark: In the deterministic system, we can still use $\mathcal{K}^t,\Phi^t$ where $t$ is the (fixed) time interval between two sampling snapshots.
 		\item Definition of Koopman generator:
 		\begin{gather}\label{def_generator}
@@ -98,14 +102,14 @@
 	\end{enumerate}
 	
 	\subsection*{EDMD framework review}
-	Let $f(x) = \mathbf{\Psi}_N(x)a$. Then 
-	$$\mathcal{K} f(x) = f(y) = \mathbf{\Psi}_N(y)a = \mathbf{\Psi}_N(x)K a + r(x)$$
+	Let $f\in \text{span}\{\psi_i\}_{i=1}^N$ (Notice that $f\circ\Phi$ is not necessarily in $\text{span}\{\psi_i\}_{i=1}^N$). Then 
+	$$\mathcal{K} f(x) = (f\circ\Phi)(x) = \mathbf{\Psi}_N(x)K a + r(x)$$
 	where $r(x)$ is the residual. Notice that the span of $\{ \psi_1, \dots, \psi_N \}$ is not necessarily invariant under $\mathcal{K}$.
 	
-	In the EDMD framework, given a dataset $\{(x_i,y_i)\}_{i=1}^M$, we want to minimize the residual over the finite data set:
-	$$J \coloneqq \sum_{i=1}^M \left| r(x_i) \right|^2 = \sum_{i=1}^M \left| \left(\mathbf{\Psi}_N(y_i) - \mathbf{\Psi}_N(x_i)K\right)\mathbf{a} \right|^2,$$
+	In the EDMD framework, given a dataset $\{(x_i,y_i)\}_{i=1}^m$, we want to minimize the residual over the finite data set:
+	$$J \coloneqq \sum_{i=1}^m \left| r(x_i) \right|^2 = \sum_{i=1}^m \left| \left(\mathbf{\Psi}_N(y_i) - \mathbf{\Psi}_N(x_i)K\right)\mathbf{a} \right|^2,$$
 	so, this is equivalent to $\min_{K} \| \Psi_Y - \Psi_X K\|_F$ and the minimal $K$ is
-	$$K = \Psi_X^{\dagger}\Psi_Y = (\Psi_X^T\Psi_X)^{\dagger}(\Psi_X^T\Psi_Y) = G^{\dagger}A$$
+	$$K = K_{N,m} = \Psi_X^{\dagger}\Psi_Y = (\Psi_X^T\Psi_X)^{\dagger}(\Psi_X^T\Psi_Y) = G^{\dagger}A$$
 	where $\dagger$ is the pseudoinverse and $G=\frac{1}{m}\Psi_X^T\Psi_X, A=\frac{1}{m}\Psi_X^T\Psi_Y$. 
 	\begin{remark}
 		Regularization through truncated SVD or by adding a small perturbation is typically applied.
@@ -144,15 +148,15 @@
 	\end{remark}
 	In our case, combning \eqref{taylor_t} and \eqref{edmd_expansion}, we can minimize the following:
 	\begin{equation*}
-		J \coloneqq \sum_{i=1}^m \left| r(x_i) \right|^2 = \sum_{i=1}^m \left| \left[\mathbf{\Psi}_N(x_i) + t \cdot \mathcal{L}\mathbf{\Psi}_N(x_i) + O(t^2) - \mathbf{\Psi}_N(x_i)K\right]\mathbf{a} \right|^2
+		J \coloneqq \sum_{i=1}^m \left| r(x_i) \right|^2 = \sum_{i=1}^m \left| \left[\mathbf{\Psi}_N(x_i) + t \cdot \mathcal{L}\mathbf{\Psi}_N(x_i) + O(t^2) - \mathbf{\Psi}_N(x_i)K(t)\right]\mathbf{a} \right|^2
 	\end{equation*}
 	which is equivalent to minimize 
 	\begin{equation}\label{loss}
-		\fcolorbox{red}{white}{$J = \min_{K} \| \Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2) - \Psi_X K \|_F^2$}
+		\fcolorbox{red}{white}{$J = \min_{K(t)} \| \Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2) - \Psi_X K(t) \|_F^2$}
 	\end{equation}
 	and the minimal $K(t)$ is
 	\begin{equation}\label{Koopman_semigroup_formula}
-		\fcolorbox{red}{white}{$K(t) = \Psi_X^{\dagger}(\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2))$}
+		\fcolorbox{red}{white}{$K(t) = K_{N,n,m}(t) = \Psi_X^{\dagger}(\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2))$}
 	\end{equation}
 	where the generator(time differential) matrix approximation $\left[\mathcal{L}\Psi_X\right]_{ij} = \mathcal{L}\psi_j(x_i)$. 
 	\begin{remark}
@@ -161,20 +165,22 @@
 	
 	Empirically, if $t$ is very small, we update the Koopman matrix approximation in the following way with $O(t^2)$ omitted:
 	\begin{equation*}
-		\fcolorbox{red}{white}{$\widehat{K}(t) = \widehat{\Psi}_X^{\dagger}(\widehat{\Psi}_X + t \cdot \widehat{\mathcal{L}\Psi}_X)$}
+		\fcolorbox{red}{white}{$\widehat{K}_{N,n,m}(t) = \widehat{\Psi}_X^{\dagger}(\widehat{\Psi}_X + t \cdot \widehat{\mathcal{L}\Psi}_X)$}
 	\end{equation*}
 	\begin{remark}
 		For the case of trained basis by NN, we replace $\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2)$ by $\Psi_Y$ in \eqref{loss}, 
 	\end{remark}
 	
-	Now, we will show that the computed $K_{N,n,m}$ by our S-EDMD method converges not only in large data $m$ and large dictionary size $N$, but also in zero-limit of sampling time $t=1/n$.
+	Now, we will show that the computed $\widehat{K}_{N,n,m}$ by our S-EDMD method converges not only in large data $m$ and large dictionary size $N$, but also in zero-limit of sampling time $t=1/n$.
 	
 	\newpage
 	\section{Convergence in the limit of large data}
+	We fix the dictionary size $N$ and sampling time $t$(sampling frequency $n=\frac{1}{t}$). Let \( K_{N,n} \) denote the matrix that represents the large-data limit of \( \widehat{K}_{N,n,m} \).
+	\vspace{5mm}
 	
 	(1) i.i.d. data:
 	\begin{align*}
-		&\quad P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) \\
+		&\quad P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n} \Vert_F > \epsilon \right) \\
 		&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi_X} \big) - \Psi_X^{\dagger}\big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
 		&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - t\Psi_X^{\dagger}\mathcal{L}\Psi_{X} + O(t^2) \Vert_F > \epsilon \right) \\
 		&\leq P\left( t\Vert \widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - \Psi_X^{\dagger}\mathcal{L}\Psi_{X} \Vert_F + O(t^2) > \epsilon \right) \\
@@ -183,7 +189,7 @@
 	where $G = \frac{1}{m}\Psi_X^* \Psi_X$ and $A = \frac{1}{m}\Psi_X^* \mathcal{L}\Psi_{X}$.
 	% (2) ergodic sampling data:
 	
-	(From Wiki) A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfies the \textit{bounded differences property} if substituting the value of the $i$th coordinate $x_i$ changes the value of $f$ by at most $c_i$. More formally, if there are constants $c_1, c_2, \ldots, c_n$ such that for all $i \in [n]$, and all $x_1 \in \mathcal{X}_1, x_2 \in \mathcal{X}_2, \ldots, x_n \in \mathcal{X}_n$,
+	A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfies the \textit{bounded differences property} if substituting the value of the $i$th coordinate $x_i$ changes the value of $f$ by at most $c_i$. More formally, if there are constants $c_1, c_2, \ldots, c_n$ such that for all $i \in [n]$, and all $x_1 \in \mathcal{X}_1, x_2 \in \mathcal{X}_2, \ldots, x_n \in \mathcal{X}_n$,
 	\[
 	\sup_{x_i' \in \mathcal{X}_i} |f(x_1, \ldots, x_{i-1}, x_i, x_{i+1}, \ldots, x_n) - f(x_1, \ldots, x_{i-1}, x_i', x_{i+1}, \ldots, x_n)| \leq c_i.
 	\]
@@ -257,12 +263,12 @@
 	\begin{theorem}
 		Let $\epsilon>0$. Define $\epsilon_t = \left(\epsilon - O(t^2)\right)/t$. Then, with same conditions defined in Theorem \ref{Gramian_estimation} and Lemma \ref{Philipp}, we have
 		\begin{equation*}
-			P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) \leq 2N^2 \left[ \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t}{N C^2 \tau \|G^{-1}\|}\right)^2 \right) + \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t \|A\|}{N C^2 \tau L}\right)^2 \right) \right]
+			P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n} \Vert_F > \epsilon \right) \leq 2N^2 \left[ \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t}{N C^2 \tau \|G^{-1}\|}\right)^2 \right) + \exp \left( -\frac{m}{8} \left(\frac{\epsilon_t \|A\|}{N C^2 \tau L}\right)^2 \right) \right]
 		\end{equation*}  
 	\end{theorem}
 	\begin{proof}
 		\begin{align*}
-			P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n,m} \Vert_F > \epsilon \right) 
+			P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n} \Vert_F > \epsilon \right) 
 			&= P\left( t\Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F + O(t^2) > \epsilon \right) \\
 			&= P\left( \Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F  > \epsilon_t \right) \\
 			&\leq \mathbb{P}\left(\|G - \widehat{G}\| > \frac{\epsilon_t}{\tau} \|G^{-1}\|^{-1} \right) + \mathbb{P}\left(\|A - \widehat{A}\| > \frac{\epsilon_t}{\tau} \|A\| \right) \\
@@ -390,19 +396,16 @@
 	\begin{remark}
 		Here the first term $\Psi_X^{\dagger}\mathcal{L}\Psi_X$ is not dependent on $n$ since we choose the basis functions manually.
 	\end{remark}
-	Choose $f = \mathbf{\Psi}_N\mathbf{a} \in C_b^2(\Omega)$, then we have
+	Choose $f \in \textrm{span}\{\psi_i\}_{i=1}^m$. So $f = \mathbf{\Psi}_N\mathbf{a}$. Then we have
 	\begin{align*}
-		%	&\quad \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
-		%	&= \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\sum_{i=1}^N \psi_i a_i\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
-		&\quad \lim_{n\to\infty} \mathcal{A}_{N,n}f \\
-		&= \lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
-		&= \lim_{n\to\infty} \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
-		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
+		&\quad \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
+		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
+		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
 	\end{align*}
-	Now, we consider the second term:
+	Notice that, the first term is independent of $n$. Now, we consider the second term:
 	\begin{align*}
-		&\quad \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
-		&= \lim_{n\to\infty} 
+		&\quad \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
+		&= 
 		\begin{bmatrix}
 			\psi_1 & \cdots & \psi_N
 		\end{bmatrix}
@@ -416,7 +419,7 @@
 			\vdots \\
 			a_N
 		\end{bmatrix} \\
-		&= \lim_{n\to\infty} 
+		&= 
 		\begin{bmatrix}
 			\psi_1 & \cdots & \psi_N
 		\end{bmatrix}
@@ -426,16 +429,16 @@
 			a_N'
 		\end{bmatrix} \\
 		&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
-		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \\
-		&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
-		&\leq \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
-		&= \lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) = 0.
+		&= \sum_{i=1}^N \psi_i a_i' \\
+		&= \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
+		&\leq \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
+		&= \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) \to 0 \text{ as } n\to\infty.
 	\end{align*}
 	Therefore, for $f=\mathbf{\Psi}_N\mathbf{a}$, we have
 	$$
-	\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a},
+	\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N (\Psi_X^{\dagger}\mathcal{L}\Psi_X) \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a},
 	$$ 
-	where $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$. In other words,
+	with $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$.	In other words,
 	$$
 	\lim_{n\to\infty} \mathcal{A}_{N,n} f = \mathcal{A}_N f,
 	$$
@@ -450,62 +453,7 @@
 		\end{equation*}
 		Then, $\mathcal{A}_{N,n} \to \mathcal{A}_N$ in strong operator topology as $n\to\infty$.
 	\end{theorem}
-	\begin{proof}
-		\begin{align*}
-			A_{N,n} &\coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}} \\
-			&= \frac{ \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
-			&= \frac{ \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}} \\
-			&= \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})
-		\end{align*}
-		\begin{remark}
-			Here the first term $\Psi_X^{\dagger}\mathcal{L}\Psi_X$ is not dependent on $n$ since we choose the basis functions manually.
-		\end{remark}
-		Choose $f = \mathbf{\Psi}_N\mathbf{a} \in C_b^2(\Omega)$, then we have
-		\begin{align*}
-			%	&\quad \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\mathcal{P}_N f\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
-			%	&= \|\lim_{N\to\infty}\lim_{n\to\infty} \mathcal{P}_N O(\tfrac{1}{n})\sum_{i=1}^N \psi_i a_i\| \quad (\text{Here the $O(\tfrac{1}{n})$ is an operator}) \\
-			&\quad \lim_{n\to\infty} \mathcal{A}_{N,n}f \\
-			&= \lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
-			&= \lim_{n\to\infty} \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
-			&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
-			&= \mathbf{\Psi}_N A_N \mathbf{a} + \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}
-		\end{align*}
-		Now, we consider the second term:
-		\begin{align*}
-			&\quad \lim_{n\to\infty} \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
-			&= \lim_{n\to\infty} 
-			\begin{bmatrix}
-				\psi_1 & \cdots & \psi_N
-			\end{bmatrix}
-			\begin{bmatrix}
-				O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n}) \\
-				\vdots & \ddots & \vdots \\
-				O(\tfrac{1}{n}) & \cdots & O(\tfrac{1}{n})
-			\end{bmatrix}
-			\begin{bmatrix}
-				a_1 \\
-				\vdots \\
-				a_N
-			\end{bmatrix} \\
-			&= \lim_{n\to\infty} 
-			\begin{bmatrix}
-				\psi_1 & \cdots & \psi_N
-			\end{bmatrix}
-			\begin{bmatrix}
-				a_1' \\
-				\vdots \\
-				a_N'
-			\end{bmatrix} \\
-			&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
-			&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i a_i' \\
-			&= \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
-			&\leq \lim_{n\to\infty} \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
-			&= \lim_{n\to\infty} \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) = 0.
-		\end{align*}
-		Therefore, for $f=\mathbf{\Psi}_N\mathbf{a}$, we have
-		$$
-		\lim_{n\to\infty} \mathcal{A}_{N,n}f = \lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a} = \mathcal{A}_N f.
-		$$
+	\begin{proof}		
 	\end{proof}
 	
 	
