@@ -119,13 +119,13 @@
 	First, we can expand the Koopman operator (semigroup) $\mathcal{K}(t)$ similar as in EDMD:
 	\begin{align}\label{edmd_expansion}
 		\mathcal{K}(t) f(x) 
-		&= \mathbb{E}[f(y)] \notag\\
+		&= \mathbb{E}[f\circ\Phi^{t}(x)] \notag\\
 		&= \mathbf{\Psi}_N(x)K(t)\mathbf{a} + r(x) 
 	\end{align}
 	Alternatively, we approximate the Koopman operator(semigroup) $\mathcal{K}(t)$ analogous to Taylor expansion using the definition of generator\eqref{def_generator}:
 	\begin{align}\label{taylor_t}
-		\mathcal{K}(t)f(x) &= \mathbb{E}[f(y)] \notag\\
-		&= \mathbb{E}[\mathbf{\Psi}_N(y)]\mathbf{a} \notag\\
+		\mathcal{K}(t)f(x) &= \mathbb{E}[f\circ\Phi^{t}(x)] \notag\\
+		&= \mathbb{E}[\mathbf{\Psi}_N\circ\Phi^{t}(x)]\mathbf{a} \notag\\
 		&= \left[ \mathbf{\Psi}_N(x) + t \cdot \mathcal{L}\mathbf{\Psi}_N(x) + O(t^2)  \right]\mathbf{a}
 	\end{align}
 	where $\mathcal{L}\mathbf{\Psi}_N(x) = \left[ \mathcal{L}\mathbf{\psi}_1(x), \dots, \mathcal{L}\mathbf{\psi}_N(x) \right]$ and
@@ -384,7 +384,7 @@
 	
 	\newpage
 	\section{Convergence in zero-limit of sampling time}
-	Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct the matrix representation $A_{N,n}$ of the discrete projected Koopman generator approximant $\mathcal{A}_{N,n}$. Then we find its limit in strong operator topology as $n\to\infty$. 
+	Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct the matrix$A_{N,n}$, which is the representation of the discrete projected Koopman generator approximant $\mathcal{A}_{N,n}$. Then we find its limit in strong operator topology as $n\to\infty$. 
 	
 	First, for each $N>0$, construct the following sequence of matrices $\{A_{N,n}\}_{n\geq 1}$:
 	\begin{align*}
@@ -396,16 +396,17 @@
 	\begin{remark}
 		Here the first term $\Psi_X^{\dagger}\mathcal{L}\Psi_X$ is not dependent on $n$ since we choose the basis functions manually.
 	\end{remark}
-	Choose $f \in \textrm{span}\{\psi_i\}_{i=1}^m$. So $f = \mathbf{\Psi}_N\mathbf{a}$. Then we have
+	Define the matrix $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$. Choose $f \in \textrm{span}\{\psi_i\}_{i=1}^N$ so that $f = \mathbf{\Psi}_N\mathbf{a}$. Then we have
 	\begin{align*}
 		&\quad \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
 		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
-		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
+		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix}) \\
+		&= \mathbf{\Psi}_N A_N \mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}
 	\end{align*}
 	Notice that, the first term is independent of $n$. Now, we consider the second term:
 	\begin{align*}
-		&\quad \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \\
-		&= 
+		&\quad \|\mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \\
+		&= \|
 		\begin{bmatrix}
 			\psi_1 & \cdots & \psi_N
 		\end{bmatrix}
@@ -418,8 +419,8 @@
 			a_1 \\
 			\vdots \\
 			a_N
-		\end{bmatrix} \\
-		&= 
+		\end{bmatrix} \| \\
+		&= \|
 		\begin{bmatrix}
 			\psi_1 & \cdots & \psi_N
 		\end{bmatrix}
@@ -427,16 +428,16 @@
 			a_1' \\
 			\vdots \\
 			a_N'
-		\end{bmatrix} \\
+		\end{bmatrix} \| \\
 		&(\text{where $a_i'=\sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j$}) \\
-		&= \sum_{i=1}^N \psi_i a_i' \\
-		&= \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \\
-		&\leq \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \\
-		&= \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) \to 0 \text{ as } n\to\infty.
+		&= \| \sum_{i=1}^N \psi_i a_i' \| \\
+		&= \| \sum_{i=1}^N \psi_i \left( \sum_{j=1}^N [O(\tfrac{1}{n})]_{ij}a_j \right) \| \\
+		&\leq \| \sum_{i=1}^N \psi_i \left( \left(N \cdot O(\tfrac{1}{n})\right) \sum_{j=1}^N a_j \right) \| \\
+		&= \| \left(N \cdot O(\tfrac{1}{n})\right) \sum_{i,j=1}^N \psi_i \left( \sum_{i,j=1}^N a_j \right) \| \to 0 \text{ as } n\to\infty.
 	\end{align*}
 	Therefore, for $f=\mathbf{\Psi}_N\mathbf{a}$, we have
 	$$
-	\lim_{n\to\infty} \mathbf{\Psi}_N A_{N,n} \mathbf{a} = \mathbf{\Psi}_N (\Psi_X^{\dagger}\mathcal{L}\Psi_X) \mathbf{a} = \mathbf{\Psi}_N A_N \mathbf{a},
+	\| \mathbf{\Psi}_N A_{N,n} \mathbf{a} - \mathbf{\Psi}_N A_N \mathbf{a} \| = \|\mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \to 0,
 	$$ 
 	with $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$.	In other words,
 	$$
@@ -447,7 +448,7 @@
 	The above content is summarized in the next theorem:
 	
 	\begin{theorem}
-		For each $N>0$, let $\mathcal{A}_N = \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$ be the projected Koopman generator with its matrix representation $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$ and $\mathcal{A}_{N,n}$ be the discrete projected Koopman generator with its matrix representation $A_{N,n}$ defined in the following: 
+		For each $N>0$, let $\mathcal{A}_N = \mathcal{P}_N \mathcal{A}|_{\mathcal{F}_N}$ be the projected Koopman generator with its matrix representation $A_N = \Psi_X^{\dagger}\mathcal{L}\Psi_X$ and $\mathcal{A}_{N,n}$ be the discrete projected Koopman generator with its matrix representation $A_{N,n}$ defined in the following: 
 		\begin{equation*}
 			A_{N,n} \coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}}
 		\end{equation*}
