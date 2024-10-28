@@ -58,7 +58,7 @@
 		\mathbf{\Psi}_N(x) \coloneqq \left[\psi_1(x), \dots, \psi_N(x)\right]
 		$$
 		
-		\item Matrices of dictionary $\{\psi_j\}_{j=1}^N$ evaluated on data $\{x_i, y_i\}_{i=1}^m$:
+		\item (Empirical)Matrices of dictionary $\{\psi_j\}_{j=1}^N$ evaluated on data $\{x_i, y_i\}_{i=1}^m$:
 		\begin{gather*}
 			\Psi_X = \begin{bmatrix}
 				\rule{0.8cm}{0.1mm} & \mathbf{\Psi}_N(x_1) & \rule{0.8cm}{0.1mm} \\
@@ -142,7 +142,7 @@
 		$$\mathbb{E}[f(X_t)|X_0=x]-f(x) = \int_0^t \left( b(X_s)\cdot \nabla f(X_s) + \frac{1}{2}\sigma^2(X_s)\colon \nabla^2 f(X_s) \right) ds$$
 		Let $t \to 0$, we have
 		\begin{align*}
-			\frac{d}{dt}f = \mathcal{L}f(x) &\coloneqq \lim_{t \to 0} \frac{\mathbb{E}[f(X_t)-f(x)|X_0=x]}{t} \\
+			\mathcal{L}f(x) &\coloneqq \lim_{t \to 0} \frac{\mathbb{E}[f(X_t)-f(x)|X_0=x]}{t} \\
 			&= b(X_t)\cdot \nabla f(X_t) + \frac{1}{2}\sigma^2(x)\colon \nabla^2 f(X_t)
 		\end{align*}
 	\end{remark}
@@ -171,22 +171,22 @@
 		For the case of trained basis by NN, we replace $\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2)$ by $\Psi_Y$ in \eqref{loss}, 
 	\end{remark}
 	
-	Now, we will show that the computed $\widehat{K}_{N,n,m}$ by our S-EDMD method converges not only in large data $m$ and large dictionary size $N$, but also in zero-limit of sampling time $t=1/n$.
 	
 	\newpage
 	\section{Convergence in the limit of large data}
 	We fix the dictionary size $N$ and sampling time $t$(sampling frequency $n=\frac{1}{t}$). Let \( K_{N,n} \) denote the matrix that represents the large-data limit of \( \widehat{K}_{N,n,m} \).
 	\vspace{5mm}
 	
-	(1) i.i.d. data:
+	(1) i.i.d. data (middle 3 steps in the following has confusing notations. You can ignore and move to the last equality):
 	\begin{align*}
 		&\quad P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n} \Vert_F > \epsilon \right) \\
-		&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi_X} \big) - \Psi_X^{\dagger}\big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
-		&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - t\Psi_X^{\dagger}\mathcal{L}\Psi_{X} + O(t^2) \Vert_F > \epsilon \right) \\
-		&\leq P\left( t\Vert \widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi_X} - \Psi_X^{\dagger}\mathcal{L}\Psi_{X} \Vert_F + O(t^2) > \epsilon \right) \\
+		&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi}_X \big) - \Psi_X^{\dagger}\big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
+		&= P\left(\Vert t\widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi}_X - t\Psi_X^{\dagger}\mathcal{L}\Psi_{X} + O(t^2) \Vert_F > \epsilon \right) \\
+		&\leq P\left( t\Vert \widehat{\Psi}_X^{\dagger} \widehat{\mathcal{L}\Psi}_X - \Psi_X^{\dagger}\mathcal{L}\Psi_{X} \Vert_F + O(t^2) > \epsilon \right) \\
 		&= P\left( t\Vert \widehat{G}^{-1} \widehat{A} - G^{-1}A \Vert_F + O(t^2) > \epsilon \right)
 	\end{align*}
-	where $G = \frac{1}{m}\Psi_X^* \Psi_X$ and $A = \frac{1}{m}\Psi_X^* \mathcal{L}\Psi_{X}$.
+	where $\widehat{G} = \frac{1}{m}\Psi_X^\top \Psi_X, \widehat{A} = \frac{1}{m}\Psi_X^\top \mathcal{L}\Psi_{X}$ and $G = \lim_{m\to\infty}\frac{1}{m}\Psi_X^\top \Psi_X, A = \lim_{m\to\infty}\frac{1}{m}\Psi_X^\top \mathcal{L}\Psi_{X}$, $K_{N,n}$ is the Koopman matrix approximation constructed by sufficient large amount of data.
+	
 	% (2) ergodic sampling data:
 	
 	A function $f : \mathcal{X}_1 \times \mathcal{X}_2 \times \cdots \times \mathcal{X}_n \to \mathbb{R}$ satisfies the \textit{bounded differences property} if substituting the value of the $i$th coordinate $x_i$ changes the value of $f$ by at most $c_i$. More formally, if there are constants $c_1, c_2, \ldots, c_n$ such that for all $i \in [n]$, and all $x_1 \in \mathcal{X}_1, x_2 \in \mathcal{X}_2, \ldots, x_n \in \mathcal{X}_n$,
@@ -384,24 +384,25 @@
 	
 	\newpage
 	\section{Convergence in zero-limit of sampling time}
-	Now we have Koopman matrix approximation at discrete time $K_{N,n}(1/n)$. We will use it to construct the matrix$A_{N,n}$, which is the representation of the discrete projected Koopman generator approximant $\mathcal{A}_{N,n}$. Then we find its limit in strong operator topology as $n\to\infty$. 
+	Now we have dimensional Koopman matrix approximation $K_{N,n}(1/n)$ at discrete time $t=1/n$. We will use it to construct the matrix $A_{N,n}$, which is the matrix representation of the discrete projected Koopman generator approximant $\mathcal{A}_{N,n}$(Is this correct?). Then we find its limit in strong operator topology as $n\to\infty$. 
 	
 	First, for each $N>0$, construct the following sequence of matrices $\{A_{N,n}\}_{n\geq 1}$:
 	\begin{align*}
 		A_{N,n} &\coloneqq \frac{ K_{N,n}\left( \tfrac{1}{n} \right)  - I }{\tfrac{1}{n}} \\
-		&= \frac{ \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
-		&= \frac{ \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}} \\
-		&= \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})
+		&= \frac{ \lim_{m\to\infty} \left[\Psi_X^{\dagger}\left(\Psi_X + \tfrac{1}{n} \cdot \mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right)\right]  - I }{\tfrac{1}{n}} \\
+		&= \frac{ \lim_{m\to\infty} \left[I + \tfrac{1}{n}\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n^2})\right]  - I }{\tfrac{1}{n}} \\
+		&= \lim_{m\to\infty} \Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n}) \\
+		&= A_N + O(\tfrac{1}{n})
 	\end{align*}
+	where $A_N \coloneqq \lim_{m\to\infty} \Psi_X^{\dagger}\mathcal{L}\Psi_X$.
 	\begin{remark}
 		Here the first term $\Psi_X^{\dagger}\mathcal{L}\Psi_X$ is not dependent on $n$ since we choose the basis functions manually.
 	\end{remark}
-	Define the matrix $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$. Choose $f \in \textrm{span}\{\psi_i\}_{i=1}^N$ so that $f = \mathbf{\Psi}_N\mathbf{a}$. Then we have
+	Choose $f \in \textrm{span}\{\psi_i\}_{i=1}^N$ so that $f = \mathbf{\Psi}_N\mathbf{a}$. Then we have
 	\begin{align*}
 		&\quad \mathbf{\Psi}_N A_{N,n}\mathbf{a} \\
-		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X + O(\tfrac{1}{n})\right)\mathbf{a} \\
-		&= \mathbf{\Psi}_N\left(\Psi_X^{\dagger}\mathcal{L}\Psi_X\right)\mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix}) \\
-		&= \mathbf{\Psi}_N A_N \mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}
+		&= \mathbf{\Psi}_N\left(A_N + O(\tfrac{1}{n})\right)\mathbf{a} \\
+		&= \mathbf{\Psi}_N A_N \mathbf{a} + \mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a} \quad (\text{Here the $O(\tfrac{1}{n})$ is a matrix})
 	\end{align*}
 	Notice that, the first term is independent of $n$. Now, we consider the second term:
 	\begin{align*}
@@ -439,7 +440,7 @@
 	$$
 	\| \mathbf{\Psi}_N A_{N,n} \mathbf{a} - \mathbf{\Psi}_N A_N \mathbf{a} \| = \|\mathbf{\Psi}_N O(\tfrac{1}{n})\mathbf{a}\| \to 0,
 	$$ 
-	with $A_N \coloneqq \Psi_X^{\dagger}\mathcal{L}\Psi_X$.	In other words,
+	In other words,
 	$$
 	\lim_{n\to\infty} \mathcal{A}_{N,n} f = \mathcal{A}_N f,
 	$$
@@ -553,7 +554,7 @@
 	and some constants $M \geq 1$, $w \in \mathbb{R}$.
 	
 	\begin{corollary}
-		Let $(\mathcal{K}_N(t))_{t\geq0}$ and $(\mathcal{K}(t))_{t\geq0}$ be strongly continuous semigroups on a Banach space $\Omega$ with generators $\mathcal{A}_N$ and $\mathcal{A}$, respectively. Assume that for some constants $M \geq 1$, $w \in \mathbb{R}$, the semigroups satisfy
+		Let $(\mathcal{K}_N(t))_{t\geq0}$ and $(\mathcal{K}(t))_{t\geq0}$ be strongly continuous semigroups with generators $\mathcal{A}_N$ and $\mathcal{A}$, respectively. Assume that for some constants $M \geq 1$, $w \in \mathbb{R}$, the semigroups satisfy
 		\[
 		\|\mathcal{K}_N(t)\|, \|\mathcal{K}(t)\| \leq Me^{wt} \quad \text{for all } t \geq 0, N \in \mathbb{N}.
 		\]
