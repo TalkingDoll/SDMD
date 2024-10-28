@@ -165,7 +165,7 @@
 	
 	Empirically, if $t$ is very small, we update the Koopman matrix approximation in the following way with $O(t^2)$ omitted:
 	\begin{equation*}
-		\fcolorbox{red}{white}{$\widehat{K}_{N,n,m}(t) = \widehat{\Psi}_X^{\dagger}(\widehat{\Psi}_X + t \cdot \widehat{\mathcal{L}\Psi}_X)$}
+		\fcolorbox{red}{white}{$\widehat{K}_{N,n,m}(t) = \Psi_X^{\dagger}(\Psi_X + t \cdot \mathcal{L}\Psi_X)$}
 	\end{equation*}
 	\begin{remark}
 		For the case of trained basis by NN, we replace $\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2)$ by $\Psi_Y$ in \eqref{loss}, 
@@ -177,7 +177,12 @@
 	We fix the dictionary size $N$ and sampling time $t$(sampling frequency $n=\frac{1}{t}$). Let \( K_{N,n} \) denote the matrix that represents the large-data limit of \( \widehat{K}_{N,n,m} \).
 	\vspace{5mm}
 	
-	(1) i.i.d. data (middle 3 steps in the following has confusing notations. You can ignore and move to the last equality):
+	(1) i.i.d. data :
+	
+	Let $$\widehat{K}_{N,n,m} \coloneqq \Psi_X^{\dagger}(\Psi_X + t \cdot \mathcal{L}\Psi_X) = I+t \widehat{G}^{-1} \widehat{A}$$
+	$$K_{N,n} \coloneqq \lim_{m\to\infty}\Psi_X^{\dagger}(\Psi_X + t \cdot \mathcal{L}\Psi_X + O(t^2)) = I + t G^{-1}A + O(t^2)$$
+	(middle 3 steps in the following has confusing notations. You can ignore and move to the last equality)
+	
 	\begin{align*}
 		&\quad P\left(\Vert \widehat{K}_{N,n,m} - K_{N,n} \Vert_F > \epsilon \right) \\
 		&= P\left(\Vert \widehat{\Psi}_X^{\dagger}\big(\widehat{\Psi}_X + t \widehat{\mathcal{L}\Psi}_X \big) - \Psi_X^{\dagger}\big(\Psi_X + t\mathcal{L}\Psi_{X} + O(t^2) \big) \Vert_F > \epsilon \right) \\
