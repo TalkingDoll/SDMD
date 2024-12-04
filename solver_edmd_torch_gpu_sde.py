@@ -18,7 +18,9 @@ from torch.autograd import grad
 from torch.func import jacrev, vmap
 from sklearn.model_selection import train_test_split
 import pandas as pd
+import joblib
 device = 'cuda'
+# device = 'cpu'
 torch.set_default_dtype(torch.float64)
 
 class KoopmanNNTorch(nn.Module):
@@ -45,17 +47,7 @@ class KoopmanNNTorch(nn.Module):
         x = torch.cat([const_out, in_x, x], dim=1)
         return x
     
-    def generate_B(self, inputs):
-        """
-        Correctly generates the B matrix based on the inputs, using the proper attribute.
-        """
-        target_dim = inputs.shape[-1]
-        # Use n_psi_train instead of n_dic_customized
-        self.basis_func_number = self.n_psi_train + target_dim + 1
-        self.B = np.zeros((self.basis_func_number, target_dim))
-        for i in range(0, target_dim):
-            self.B[i + 1][i] = 1
-        return self.B
+
 
 class KoopmanModelTorch(nn.Module):
     def __init__(self, dict_net, target_dim, k_dim):
@@ -114,7 +106,7 @@ class KoopmanSolverTorch(object):
     '''
 
     def __init__(self, dic, target_dim, reg=0.0, checkpoint_file='example_koopman_net001.torch', fnn_checkpoint_file= 'example_fnn001.torch', 
-                generator_batch_size= 4, fnn_batch_size= 32, delta_t= 0.1):
+                a_b_file= None, generator_batch_size= 4, fnn_batch_size= 32, delta_t= 0.1):
         """Initializer
 
         :param dic: dictionary
@@ -137,6 +129,7 @@ class KoopmanSolverTorch(object):
         self.generator_batch_size= generator_batch_size
         self.fnn_batch_size= fnn_batch_size
         self.delta_t= delta_t
+        self.a_b_file= a_b_file
 
     def separate_data(self, data):
         data_x = data[0]
@@ -156,7 +149,7 @@ class KoopmanSolverTorch(object):
         self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, reg=reg_final)
         self.K_np = self.K.detach().cpu().numpy()
         self.eig_decomp(self.K_np)
-        self.compute_mode()
+        #self.compute_mode()
 
     def eig_decomp(self, K):
         """ eigen-decomp of K """
@@ -174,15 +167,15 @@ class KoopmanSolverTorch(object):
         val = np.matmul(psi_x, self.eigenvectors)
         return val
 
-    def compute_mode(self):
-        self.basis_func_number = self.K.shape[0]
+    # def compute_mode(self):
+    #     self.basis_func_number = self.K.shape[0]
 
-        # Form B matrix
-        self.B = self.dic.generate_B(self.data_x_train)
+    #     # Form B matrix
+    #     self.B = self.dic.generate_B(self.data_x_train)
 
-        # Compute modes
-        self.modes = np.matmul(self.eigenvectors_inv, self.B).T
-        return self.modes
+    #     # Compute modes
+    #     self.modes = np.matmul(self.eigenvectors_inv, self.B).T
+    #     return self.modes
 
     # def calc_psi_next(self, data_x, K):
     #     psi_x = self.dic_func(data_x)
@@ -420,27 +413,7 @@ class KoopmanSolverTorch(object):
         second_derivatives = torch.concat(second_derivatives_list, axis=0)
         return first_derivatives, second_derivatives
     
-    def compute_var_coefficients(self, data_x, delta_t=0.1):
-        num_samples, state_dim = data_x.shape
-        X_t_1 = data_x[:-1, :]
-        X_t = data_x[1:, :]
-        X_t_1_with_intercept = torch.concat([torch.ones((num_samples - 1, 1), dtype=torch.float64).to(device), X_t_1], axis=1)
-        coefficients = torch.linalg.lstsq(X_t_1_with_intercept, X_t).solution
-        print ('coefficients: ', coefficients)
-        beta_0 = coefficients[0, :]
-        beta_1 = coefficients[1:, :]
-        b_Xt = beta_0 + torch.matmul(X_t_1, beta_1.T) #when replacing VAR with NN - use b_Xt= nn_model.predict(X_t1)
-        residuals = X_t - b_Xt
-        variance = torch.square(residuals)
-        a_Xt = torch.sqrt(variance / delta_t)  # Compute a_Xt as a 2D tensor
-        #print ('a_Xt before diag', a_Xt.shape)
-        #a_Xt = torch.diag(a_Xt)  # Convert each row of a_Xt to a diagonal matrix
-        a_xt_diags= []
-        for jj in np.arange(a_Xt.shape[0]):
-            a_xt_diags.append(torch.diag(a_Xt[jj, :].squeeze()))
-        a_Xt_final= torch.stack (a_xt_diags)
 
-        return b_Xt, a_Xt_final
 
     def compute_neural_a_b(self, data_x, delta_t):
         num_samples, state_dim = data_x.shape
@@ -653,11 +626,18 @@ class KoopmanSolverTorch(object):
         self.data_valid = data_valid
 
         self.batch_size = batch_size
-        data_x_train_tensor= torch.DoubleTensor (self.data_x_train)
+        data_x_train_tensor= torch.DoubleTensor(self.data_x_train)
+        #here we load compute drift and diffusion coefficents using feed-forward neural network 
         self.b_Xt, self. a_Xt = self.compute_neural_a_b(data_x_train_tensor, delta_t= self.delta_t)
         self. L_Psi = self.compute_generator_L(data_x_train_tensor, self.b_Xt, self.a_Xt, self.delta_t)
         self.K = self.compute_K_with_generator (self.dic_func, self.data_x_train, self.data_y_train, self.reg)
-        
+        # here we save drift and diffusion coefficents to  the joblib file, if filename  is specified.
+        if (self.a_b_file is not None):
+            a_Xt_np= self.a_Xt.detach().cpu().numpy()
+            b_Xt_np= self.b_Xt.detach().cpu().numpy()
+            print ('saving FNN a and b to: ', self.a_b_file )
+            joblib.dump ((a_Xt_np,b_Xt_np), self.a_b_file)
+            
         # Build the Koopman DL model
         self.build_model()
 
@@ -666,6 +646,10 @@ class KoopmanSolverTorch(object):
         curr_last_loss = 1e15
         self.koopman_optimizer= torch.optim.Adam(self.koopman_model.parameters(), lr=lr, weight_decay=1e-5)
         for ii in arange(epochs):
+            #starting outer epoch. In each outer epoch we compute generator L
+            #Koopman operator K is computed from L each outer epoch,
+            # and the matrix K is set as weighths of layer K of our Koopman NN. 
+            #then we do several steps of training our NN that is the dictionary
             start_time = time.time()
             print(f"Outer Epoch {ii+1}/{epochs}")
             
@@ -676,7 +660,7 @@ class KoopmanSolverTorch(object):
             with torch.no_grad():
                 self.koopman_model.layer_K.weight.data = self.K
 
-            # Two steps for training PsiNN
+            #  steps (inner epochs) for training PsiNN, the number of inner epochs is given by epochs parameter below, here epochs= 4
             curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs=4, lr=curr_lr, initial_loss=curr_last_loss)
             
             if curr_last_loss > curr_best_loss:
