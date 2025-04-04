@@ -313,7 +313,7 @@ class KoopmanSolverTorch(object):
                                                       lrate=lr, epochs=epochs, initial_loss=initial_loss)
         return psi_losses, best_psi_loss
 
-    
+    # This is the separate NN for training the SDE coefficients.
     def fit_fnn_model(self, fnn_model, fnn_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
                       fnn_batch_size=32, lrate=1e-4, epochs=1000, initial_loss=10000):
         load_best = False
@@ -427,7 +427,7 @@ class KoopmanSolverTorch(object):
         self.fnn_optimizer= torch.optim.Adam(self.fnn_model.parameters(), lr=fnn_lr, weight_decay=1e-5)
         xx_train,  xx_test, yy_train, yy_test= train_test_split(X_t_1, X_t, test_size= 0.2)
         self.fit_fnn_model(self.fnn_model, self.fnn_optimizer, self.fnn_checkpoint_file, xx_train, yy_train, xx_test, yy_test,
-                           fnn_batch_size=16, lrate=0.5e-4, epochs=50, initial_loss=10000)
+                           fnn_batch_size=16, lrate=0.5e-4, epochs=50, initial_loss=10000) # You can modify the parameters of separate NN for SDE coefficients training
         
         b_Xt = self.fnn_model(X_t_1.to(device)) #when replacing VAR with NN - use b_Xt= nn_model.predict(X_t1)
         #b_Xt = beta_0 + torch.matmul(X_t_1, torch.transpose(beta_1))
