@@ -40,6 +40,3 @@ If you use SDMD or this code in your research, please cite the following paper:
 }
 ```
 
-## References
-* [Full Paper on arXiv](https://arxiv.org/abs/2501.13301)
-
