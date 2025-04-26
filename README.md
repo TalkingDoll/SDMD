@@ -18,7 +18,7 @@ The current implementation leverages PyTorch for efficient computation, particul
 
 3.  **Numerical Stability Improvement (`solver_sdmd_torch_gpu3.py`)**:
     * Based on `solver_sdmd_torch_gpu2.py`.
-    * The `compute_generator_L` function (likely related to calculating the generator approximation matrix $A_N = G^{-1}H$ or the SDMD update $\hat{G}^{-1}\hat{H}$) now uses **Cholesky factorization** instead of the pseudoinverse ($\dagger$) or direct inversion ($\hat{G}^{-1}$). This is often preferred for better numerical stability when dealing with potentially ill-conditioned Gram matrices ($\hat{G}$).
+    * The `compute_generator_L` function (related to calculating the generator approximation matrix $A_N = G^{-1}H$ or the SDMD update $\hat{G}^{-1}\hat{H}$) now uses **Cholesky factorization** instead of the pseudoinverse ($\dagger$) or direct inversion ($\hat{G}^{-1}$). This is often preferred for better numerical stability when dealing with potentially ill-conditioned Gram matrices ($\hat{G}$).
 
 *(Note: `solver_sdmd_torch_gpu2.py` and `solver_sdmd_torch_gpu3.py` are currently under testing.)*
 
