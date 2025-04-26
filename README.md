@@ -23,7 +23,8 @@ The current implementation leverages PyTorch for efficient computation, particul
 *(Note: `solver_sdmd_torch_gpu2.py` and `solver_sdmd_torch_gpu3.py` are currently under testing.)*
 
 
-## Citation
+## References
+* [Full Paper on arXiv](https://arxiv.org/abs/2501.13301)
 
 If you use SDMD or this code in your research, please cite the following paper:
 
