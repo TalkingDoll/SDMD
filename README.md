@@ -5,6 +5,8 @@ This repository contains the implementation of Stochastic Dynamic Mode Decomposi
 **A Data-Driven Framework for Koopman Semigroup Estimation in Stochastic Dynamical Systems**
 *Yuanchao Xu, Kaidi Shao, Isao Ishikawa, Yuka Hashimoto, Nikos Logothetis, Zhongwei Shen*
 
+* [Full Paper on arXiv](https://arxiv.org/abs/2501.13301)
+
 ## Recent Updates
 
 The current implementation leverages PyTorch for efficient computation, particularly on GPUs. Recent updates focus on improving performance and modularity:
@@ -24,7 +26,6 @@ The current implementation leverages PyTorch for efficient computation, particul
 
 
 ## References
-* [Full Paper on arXiv](https://arxiv.org/abs/2501.13301)
 
 If you use SDMD or this code in your research, please cite the following paper:
 
