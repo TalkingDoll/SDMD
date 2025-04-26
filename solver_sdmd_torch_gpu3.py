@@ -309,74 +309,6 @@ class KoopmanSolverTorch(object):
                                                       lrate=lr, epochs=epochs, initial_loss=initial_loss)
         return psi_losses, best_psi_loss
 
-    # # This is the separate NN for training the SDE coefficients
-    # def fit_fnn_model(self, fnn_model, fnn_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
-    #                   fnn_batch_size=32, lrate=1e-4, epochs=1000, initial_loss=10000):
-    #     load_best = False
-    #     if not torch.is_tensor (xx_train):
-    #         xx_train_tensor = torch.DoubleTensor((xx_train)).to(device)
-    #         yy_train_tensor = torch.DoubleTensor((yy_train)).to(device)
-    #         xx_test_tensor = torch.DoubleTensor((xx_test)).to(device)
-    #         yy_test_tensor = torch.DoubleTensor((yy_test)).to(device)
-    #     else:
-    #         xx_train_tensor = xx_train.to(device)
-    #         yy_train_tensor = yy_train.to(device)
-    #         xx_test_tensor = xx_test.to(device)
-    #         yy_test_tensor = yy_test.to(device)
-            
-    #     #print (xx_train_tensor.shape, yy_train_tensor.shape)
-    #     train_dataset = torch.utils.data.TensorDataset(xx_train_tensor, yy_train_tensor)
-    #     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=fnn_batch_size, shuffle=False)
-    
-    #     val_dataset = torch.utils.data.TensorDataset(xx_test_tensor, yy_test_tensor)
-    #     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=fnn_batch_size, shuffle=False)
-    
-    #     n_epochs = epochs
-    #     best_loss = initial_loss
-    #     mlp_mdl = fnn_model
-    #     #optimizer = torch.optim.Adam(mlp_mdl.parameters(), lr=lrate, weight_decay=1e-5)
-    #     optimizer = fnn_optimizer
-    #     for param_group in optimizer.param_groups:
-    #         param_group['lr'] = lrate
-    #     criterion = nn.MSELoss()
-    
-    #     mlp_mdl.train()
-    #     val_loss_list = []
-    
-    #     for epoch in range(n_epochs):
-    #         train_loss = 0.0
-    #         for data, target in train_loader:
-    #             optimizer.zero_grad()
-    #             output = mlp_mdl(data)
-               
-    #             loss = criterion(output,target)
-    #             loss.backward()
-    #             optimizer.step()
-    #             train_loss += loss.item() * data.size(0)
-    #         train_loss = train_loss / len(train_loader.dataset)
-    
-    #         val_loss = 0.0
-    #         with torch.no_grad():
-    #             for data, target in val_loader:
-    #                 output_val = mlp_mdl(data)
-    
-    #                 loss = criterion(output_val, target)
-    #                 val_loss += loss.item() * data.size(0)
-    #         val_loss = val_loss / len(val_loader.dataset)
-    #         val_loss_list.append(val_loss)
-    
-    #         print('Epoch: {} \tTraining Loss: {:.6f} val loss: {:.6f}'.format(
-    #             epoch + 1, train_loss, val_loss))
-    
-    #         if val_loss < best_loss:
-    #             print('saving, val loss enhanced:', val_loss, best_loss)
-    #             #torch.save(mlp_mdl.state_dict(), checkpoint_file)
-    #             torch.save({
-    #             'model_state_dict': mlp_mdl.state_dict(),
-    #             'optimizer_state_dict': optimizer.state_dict(),
-    #             }, checkpoint_file)
-    #             best_loss = val_loss
-    #             load_best = True
                 
     def process_batch(self, batch_inputs):
         #batch_inputs= torch.DoubleTensor(batch_inputs, requires_grad= True)
@@ -392,34 +324,47 @@ class KoopmanSolverTorch(object):
         batch_second_derivatives= batch_second_derivatives00.sum ((2, 4))      
         return batch_first_derivatives, batch_second_derivatives
 
+
     def compute_dPsi_X(self, data_x, b_Xt, a_Xt, delta_t):
         """
-        Vectorized computation of dPsi_X:
-        Removes nested Python loops and uses four tensor operations instead.
+        Vectorized computation of dPsi_X with dimension handling.
         
         Args:
             data_x   (Tensor): shape (M, state_dim)
             b_Xt     (Tensor): shape (M-1, state_dim)  — drift coefficients
-            a_Xt     (Tensor): shape (M-1, state_dim, state_dim) — diffusion matrices
+            a_Xt     (Tensor): shape (M-1, state_dim) or (M-1, state_dim, state_dim) — diffusion coefficients
             delta_t  (float): time step
         
         Returns:
             dPsi_X   (Tensor): shape (M-1, num_features)
         """
-        # 1) Compute batched Jacobian and Hessian as before
+        # 1) Compute batched Jacobian and Hessian
         jacobian, hessian = self.get_derivatives(data_x, batch_size=self.generator_batch_size)
+        
         # 2) Drop the last time point
         J = jacobian[:-1]   # (M-1, F, D)
         H = hessian[:-1]    # (M-1, F, D, D)
         B = b_Xt            # (M-1, D)
-        A = a_Xt            # (M-1, D, D)
+        
+        # 3) Handle diffusion tensor dimensions - ensure it's (M-1, D, D)
+        state_dim = data_x.shape[1]
+        if a_Xt.ndim == 2:  # (M-1, D) for 1D case
+            # Expand 1D to diagonal matrix: (M-1, D) -> (M-1, D, D)
+            A = torch.diag_embed(a_Xt)
+        else:
+            A = a_Xt  # Already (M-1, D, D)
+            
+        # Print debug info to verify shapes
+        print(f"J shape: {J.shape}, B shape: {B.shape}")
+        print(f"H shape: {H.shape}, A shape: {A.shape}")
 
-        # 3) term1[i,j] = sum_k J[i,j,k] * B[i,k]
+        # 4) term1[i,j] = sum_k J[i,j,k] * B[i,k]
         term1 = (J * B.unsqueeze(1)).sum(dim=-1)           # (M-1, F)
-        # 4) term2[i,j] = 0.5 * sum_{k,l} H[i,j,k,l] * A[i,k,l]
+        
+        # 5) term2[i,j] = 0.5 * sum_{k,l} H[i,j,k,l] * A[i,k,l]
         term2 = 0.5 * (H * A.unsqueeze(1)).sum(dim=(-1, -2))  # (M-1, F)
 
-        # 5) Multiply by time step
+        # 6) Multiply by time step
         dPsi_X = (term1 + term2) * delta_t
         return dPsi_X
 
@@ -464,9 +409,6 @@ class KoopmanSolverTorch(object):
         second_derivatives = torch.cat(second_list, dim=0)
         return first_derivatives, second_derivatives
 
-
-
-    # Modify the compute_neural_a_b method in KoopmanSolverTorch class
     def compute_neural_a_b(self, data_x, delta_t):
         """
         Compute the drift and diffusion coefficients using the SDECoefficientEstimator.
@@ -479,9 +421,9 @@ class KoopmanSolverTorch(object):
         sde_estimator = SDECoefficientEstimator(device=device)
         
         # Build the model with customizable parameters
-        hidden_size = 128  # You can change this
-        n_hidden_layers = 1  # You can change this
-        dropout = 0.01  # You can change this
+        hidden_size = 128
+        n_hidden_layers = 1
+        dropout = 0.01
         
         sde_estimator.build_model(
             state_dim=state_dim,
@@ -491,9 +433,9 @@ class KoopmanSolverTorch(object):
         )
         
         # Train the model
-        learning_rate = 5e-4  # You can change this
-        epochs = 50  # You can change this
-        batch_size = self.fnn_batch_size  # Use the batch size from the class
+        learning_rate = 5e-4
+        epochs = 50
+        batch_size = self.fnn_batch_size
         
         sde_estimator.fit_model(
             X_t_1=X_t_1,
@@ -505,10 +447,19 @@ class KoopmanSolverTorch(object):
         )
         
         # Estimate the coefficients
-        b_Xt, a_Xt_final = sde_estimator.estimate_coefficients(X_t_1, X_t, delta_t)
+        b_Xt, a_Xt = sde_estimator.estimate_coefficients(X_t_1, X_t, delta_t)
+        
+        # Handle a_Xt shape to ensure it's a 3D tensor even in 1D state space
+        if state_dim == 1 and len(a_Xt.shape) == 2:
+            # If 1D state space and a_Xt is a 2D tensor (M-1, 1)
+            # Expand it to a 3D tensor (M-1, 1, 1)
+            a_Xt_final = a_Xt.unsqueeze(-1)
+            print(f"Expanded a_Xt shape from {a_Xt.shape} to {a_Xt_final.shape}")
+        else:
+            a_Xt_final = a_Xt
+            print(f"Using original a_Xt shape: {a_Xt_final.shape}")
         
         return b_Xt, a_Xt_final
-
 
     def compute_generator_L(self, data_x, b_Xt, a_Xt, delta_t, lambda_reg=0.01):
         """
