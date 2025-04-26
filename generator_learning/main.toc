@@ -1,5 +1,0 @@
-\beamer@sectionintoc {1}{Introduction}{3}{0}{1}
-\beamer@sectionintoc {2}{Koopman Operator Theory}{4}{0}{2}
-\beamer@sectionintoc {3}{Koopman Operator Computation for Deterministic Systems}{6}{0}{3}
-\beamer@sectionintoc {4}{Koopman Operator Computation for Stochastic Systems}{14}{0}{4}
-\beamer@sectionintoc {5}{Conclusion}{16}{0}{5}
