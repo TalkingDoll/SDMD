@@ -27,25 +27,44 @@ class KoopmanNNTorch(nn.Module):
     def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, **kwargs):
         super(KoopmanNNTorch, self).__init__()
         self.layer_sizes = layer_sizes
-        self.n_psi_train = n_psi_train  # Using n_psi_train directly, consistent with DicNN
+        self.n_psi_train = n_psi_train
         
         self.layers = nn.ModuleList()
         bias = False
         n_layers = len(layer_sizes)
         
+        # First layer
         self.layers.append(nn.Linear(input_size, layer_sizes[0], bias=bias))
+        # Hidden layers
         for ii in arange(len(layer_sizes) - 1):
-            self.layers.append(nn.Linear(layer_sizes[ii - 1], layer_sizes[ii], bias=True))
+            self.layers.append(nn.Linear(layer_sizes[ii], layer_sizes[ii+1], bias=True))
+        # Activation and output layer
         self.layers.append(nn.Tanh())
-        self.layers.append(nn.Linear(layer_sizes[n_layers - 1], n_psi_train, bias=True))
+        self.layers.append(nn.Linear(layer_sizes[-1], n_psi_train, bias=True))
     
     def forward(self, x):
+        # 1) If input is a 1D vector, add batch dimension
+        squeeze_back = False
+        if x.dim() == 1:
+            x = x.unsqueeze(0)  # Convert to (1, D)
+            squeeze_back = True
+        
+        # 2) Save original input
         in_x = x
+        
+        # 3) Normal forward pass
         for layer in self.layers:
             x = layer(x)
-        const_out = torch.ones_like(in_x[:, :1])  # print (const_out)
-        x = torch.cat([const_out, in_x, x], dim=1)
-        return x
+        
+        # 4) Concatenate constant term, original input and network output
+        const_out = torch.ones_like(in_x[:, :1])
+        out = torch.cat([const_out, in_x, x], dim=1)
+        
+        # 5) If batch dimension was added at the beginning, remove it
+        if squeeze_back:
+            out = out.squeeze(0)  # Restore to original 1D
+        
+        return out
     
 
 
