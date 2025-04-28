@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 
-# from torch.func import jacrev
-from torch.func import jacrev, vmap
+from torch.func import jacrev
 import joblib
 from sde_coefficients_estimator import SDECoefficientEstimator
 
@@ -24,44 +23,25 @@ class KoopmanNNTorch(nn.Module):
     def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, **kwargs):
         super(KoopmanNNTorch, self).__init__()
         self.layer_sizes = layer_sizes
-        self.n_psi_train = n_psi_train
+        self.n_psi_train = n_psi_train  # Using n_psi_train directly, consistent with DicNN
         
         self.layers = nn.ModuleList()
         bias = False
         n_layers = len(layer_sizes)
         
-        # First layer
         self.layers.append(nn.Linear(input_size, layer_sizes[0], bias=bias))
-        # Hidden layers
         for ii in arange(len(layer_sizes) - 1):
-            self.layers.append(nn.Linear(layer_sizes[ii], layer_sizes[ii+1], bias=True))
-        # Activation and output layer
+            self.layers.append(nn.Linear(layer_sizes[ii - 1], layer_sizes[ii], bias=True))
         self.layers.append(nn.Tanh())
-        self.layers.append(nn.Linear(layer_sizes[-1], n_psi_train, bias=True))
+        self.layers.append(nn.Linear(layer_sizes[n_layers - 1], n_psi_train, bias=True))
     
     def forward(self, x):
-        # 1) If input is a 1D vector, add batch dimension
-        squeeze_back = False
-        if x.dim() == 1:
-            x = x.unsqueeze(0)  # Convert to (1, D)
-            squeeze_back = True
-        
-        # 2) Save original input
         in_x = x
-        
-        # 3) Normal forward pass
         for layer in self.layers:
             x = layer(x)
-        
-        # 4) Concatenate constant term, original input and network output
-        const_out = torch.ones_like(in_x[:, :1])
-        out = torch.cat([const_out, in_x, x], dim=1)
-        
-        # 5) If batch dimension was added at the beginning, remove it
-        if squeeze_back:
-            out = out.squeeze(0)  # Restore to original 1D
-        
-        return out
+        const_out = torch.ones_like(in_x[:, :1])  # print (const_out)
+        x = torch.cat([const_out, in_x, x], dim=1)
+        return x
     
 
 
@@ -329,51 +309,63 @@ class KoopmanSolverTorch(object):
                                                       lrate=lr, epochs=epochs, initial_loss=initial_loss)
         return psi_losses, best_psi_loss
 
+                
     def process_batch(self, batch_inputs):
+        #batch_inputs= torch.DoubleTensor(batch_inputs, requires_grad= True)
         batch_inputs.requires_grad_()
-
-        # Compute vectorized first derivatives: Jacobian for each sample in the batch.
-        batch_first_jacobian = vmap(jacrev(self.dic))(batch_inputs)
-        batch_first_derivatives = batch_first_jacobian.detach()
-
-        # Compute vectorized second derivatives: Hessian for each sample in the batch.
-        batch_second_jacobian = vmap(jacrev(lambda x: jacrev(self.dic)(x)))(batch_inputs)
-        batch_second_derivatives = batch_second_jacobian.detach()
-
+        #print (batch_inputs.shape)
+        batch_outputs = self.dic(batch_inputs)
+        #print (batch_outputs.shape)
+        
+        #batch_first_derivatives =jacobian(self.dic, batch_inputs, create_graph= True)
+        batch_first_derivatives00= jacrev(self.dic)(batch_inputs)
+        batch_first_derivatives= batch_first_derivatives00.sum(2)       
+        batch_second_derivatives00 =jacrev(lambda b_inputs:jacrev(self.dic)(b_inputs)) ( batch_inputs)
+        batch_second_derivatives= batch_second_derivatives00.sum ((2, 4))      
         return batch_first_derivatives, batch_second_derivatives
 
+
     def compute_dPsi_X(self, data_x, b_Xt, a_Xt, delta_t):
-        print("Starting computation of dPsi_X...")
-        device = data_x.device  # Detect the device of data_x
-
-        # Get the Jacobian and Hessian tensors
-        print("Getting derivatives (Jacobian and Hessian)...")
+        """
+        Vectorized computation of dPsi_X with dimension handling.
+        
+        Args:
+            data_x   (Tensor): shape (M, state_dim)
+            b_Xt     (Tensor): shape (M-1, state_dim)  — drift coefficients
+            a_Xt     (Tensor): shape (M-1, state_dim) or (M-1, state_dim, state_dim) — diffusion coefficients
+            delta_t  (float): time step
+        
+        Returns:
+            dPsi_X   (Tensor): shape (M-1, num_features)
+        """
+        # 1) Compute batched Jacobian and Hessian
         jacobian, hessian = self.get_derivatives(data_x, batch_size=self.generator_batch_size)
+        
+        # 2) Drop the last time point
+        J = jacobian[:-1]   # (M-1, F, D)
+        H = hessian[:-1]    # (M-1, F, D, D)
+        B = b_Xt            # (M-1, D)
+        
+        # 3) Handle diffusion tensor dimensions - ensure it's (M-1, D, D)
+        state_dim = data_x.shape[1]
+        if a_Xt.ndim == 2:  # (M-1, D) for 1D case
+            # Expand 1D to diagonal matrix: (M-1, D) -> (M-1, D, D)
+            A = torch.diag_embed(a_Xt)
+        else:
+            A = a_Xt  # Already (M-1, D, D)
+            
+        # Print debug info to verify shapes
+        print(f"J shape: {J.shape}, B shape: {B.shape}")
+        print(f"H shape: {H.shape}, A shape: {A.shape}")
 
-        # Align all tensors to the same number of data points
-        print("Aligning tensor dimensions...")
-        min_size = min(jacobian.shape[0], b_Xt.shape[0], hessian.shape[0], a_Xt.shape[0])
+        # 4) term1[i,j] = sum_k J[i,j,k] * B[i,k]
+        term1 = (J * B.unsqueeze(1)).sum(dim=-1)           # (M-1, F)
+        
+        # 5) term2[i,j] = 0.5 * sum_{k,l} H[i,j,k,l] * A[i,k,l]
+        term2 = 0.5 * (H * A.unsqueeze(1)).sum(dim=(-1, -2))  # (M-1, F)
 
-        jacobian = jacobian[:min_size]
-        hessian = hessian[:min_size]
-        b_Xt = b_Xt[:min_size]
-        a_Xt = a_Xt[:min_size]
-
-        # Double-check the shapes
-        print(f"Aligned Jacobian shape: {jacobian.shape}")
-        print(f"Aligned b_Xt shape: {b_Xt.shape}")
-        print(f"Aligned Hessian shape: {hessian.shape}")
-        print(f"Aligned a_Xt shape: {a_Xt.shape}")
-
-        # Vectorized computation
-        print("Performing vectorized computation...")
-        term1 = torch.einsum('ijk,ik->ij', jacobian, b_Xt)   # Efficient dot product
-        term2 = 0.5 * torch.einsum('ijkl,ikl->ij', hessian, a_Xt)  # Efficient tensor contraction
-
-        # Compute dPsi_X in a vectorized way
+        # 6) Multiply by time step
         dPsi_X = (term1 + term2) * delta_t
-
-        print("Computation complete.")
         return dPsi_X
 
     def get_derivatives(self, inputs, batch_size=4):
