@@ -262,7 +262,8 @@ class KoopmanSolverTorch(object):
         yy_test_tensor = torch.DoubleTensor((yy_test)).to(device)
     
         train_dataset = torch.utils.data.TensorDataset(xx_train_tensor, yy_train_tensor)
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        # train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
     
         val_dataset = torch.utils.data.TensorDataset(xx_test_tensor, yy_test_tensor)
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
@@ -680,7 +681,7 @@ class KoopmanSolverTorch(object):
                 self.koopman_model.layer_K.weight.data = self.K
 
             #  steps (inner epochs) for training PsiNN, the number of inner epochs is given by epochs parameter below, here epochs= 4
-            curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs=4, lr=curr_lr, initial_loss=curr_last_loss)
+            curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs=2, lr=curr_lr, initial_loss=curr_last_loss)
             
             if curr_last_loss > curr_best_loss:
                 curr_last_loss = curr_best_loss
