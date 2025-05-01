@@ -22,7 +22,11 @@ The current implementation leverages PyTorch for efficient computation, particul
     * Based on `solver_sdmd_torch_gpu2.py`.
     * The `compute_generator_L` function (related to calculating the generator approximation matrix $A_N = G^{-1}H$ or the SDMD update $\hat{G}^{-1}\hat{H}$) now uses **Cholesky factorization** instead of the pseudoinverse ($\dagger$) or direct inversion ($\hat{G}^{-1}$). This is often preferred for better numerical stability when dealing with potentially ill-conditioned Gram matrices ($\hat{G}$).
 
-*(Note: `solver_sdmd_torch_gpu2.py` and `solver_sdmd_torch_gpu3.py` are under testing.)*
+4.  **Covergence of Training Loss Improvement (`solver_sdmd_torch_gpu4.py`)**:
+    * Based on `solver_sdmd_torch_gpu3.py`.
+    * Now the value of training loss converges much more stable.
+
+*(Note: `solver_sdmd_torch_gpu4.py` is still under testing.)*
 
 
 ## References
