@@ -224,6 +224,44 @@ class SDECoefficientEstimator:
             
         return b_Xt, a_Xt_final
     
+    def estimate_coefficients2(self, X_t_1, X_t, delta_t):
+        """
+        Estimate the drift b(x) and diffusion matrix σσᵀ for the SDE.
+
+        Args:
+            X_t_1 (Tensor): current state of shape (N, D)
+            X_t (Tensor): next state of shape (N, D)
+            delta_t (float): time step Δt
+
+        Returns:
+            b_Xt (Tensor): drift term of shape (N, D)
+            diffusion_matrix (Tensor): diffusion matrix σσᵀ of shape (N, D, D)
+        """
+        self.fnn_model.eval()
+        X_t_1 = X_t_1.to(self.device)
+        X_t = X_t.to(self.device)
+
+        # Predict drift b(x)
+        with torch.no_grad():
+            b_Xt = self.fnn_model(X_t_1)
+
+        # Compute residuals and variance
+        residuals = X_t - b_Xt
+        variance = residuals.pow(2)
+
+        # Compute σ = sqrt(variance / delta_t)
+        sigma = torch.sqrt(variance / delta_t)
+
+        # Build diagonal matrices of σ for each sample
+        N, D = sigma.shape
+        sigma_mats = torch.stack([torch.diag(sigma[i]) for i in range(N)])  # (N, D, D)
+
+        # Compute diffusion matrix σσᵀ
+        diffusion_matrix = sigma_mats @ sigma_mats.transpose(-1, -2)
+
+        return b_Xt, diffusion_matrix
+
+    
     def load_model(self, checkpoint_file):
         """
         Load a trained model from a checkpoint file.
