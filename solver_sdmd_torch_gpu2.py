@@ -383,7 +383,7 @@ class KoopmanSolverTorch(object):
         term2 = 0.5 * (H * A.unsqueeze(1)).sum(dim=(-1, -2))  # (M-1, F)
 
         # 6) Multiply by time step
-        dPsi_X = (term1 + term2) * delta_t
+        dPsi_X = term1 + term2
         return dPsi_X
 
     def get_derivatives(self, inputs, batch_size=4):

@@ -384,7 +384,7 @@ class KoopmanSolverTorch(object):
         term2 = 0.5 * (H * A.unsqueeze(1)).sum(dim=(-1, -2))  # (M-1, F)
 
         # 6) Multiply by time step
-        dPsi_X = (term1 + term2) * delta_t
+        dPsi_X = term1 + term2
         return dPsi_X
 
     def get_derivatives(self, inputs, batch_size=4):
@@ -466,7 +466,7 @@ class KoopmanSolverTorch(object):
         )
         
         # Estimate the coefficients
-        b_Xt, a_Xt = sde_estimator.estimate_coefficients(X_t_1, X_t, delta_t)
+        b_Xt, a_Xt = sde_estimator.estimate_coefficients2(X_t_1, X_t, delta_t)
         
         # Handle a_Xt shape to ensure it's a 3D tensor even in 1D state space
         if state_dim == 1 and len(a_Xt.shape) == 2:
