@@ -422,9 +422,8 @@ class KoopmanSolverTorch(object):
         term1 = (J * B.unsqueeze(1)).sum(dim=-1)           # (M-1, F)
         
         # 5) term2[i,j] = 0.5 * sum_{k,l} H[i,j,k,l] * (A@A^T)[i,k,l]
-        # Compute σσ^T for Itô formula
-        A_squared = torch.bmm(A, A.transpose(1, 2))
-        term2 = 0.5 * (H * A_squared.unsqueeze(1)).sum(dim=(-1, -2))  # (M-1, F)
+        # Compute σσ^T for Itô formula        
+        term2 = 0.5 * (H * A.unsqueeze(1)).sum(dim=(-1, -2))
 
         # 6) Return without delta_t multiplication
         dPsi_X = term1 + term2
