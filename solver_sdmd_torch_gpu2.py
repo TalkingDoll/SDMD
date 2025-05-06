@@ -328,7 +328,7 @@ class KoopmanSolverTorch(object):
                                                       lrate=lr, epochs=epochs, initial_loss=initial_loss)
         return psi_losses, best_psi_loss
 
-               
+                
     def process_batch(self, batch_inputs):
         #batch_inputs= torch.DoubleTensor(batch_inputs, requires_grad= True)
         batch_inputs.requires_grad_()
@@ -342,6 +342,7 @@ class KoopmanSolverTorch(object):
         batch_second_derivatives00 =jacrev(lambda b_inputs:jacrev(self.dic)(b_inputs)) ( batch_inputs)
         batch_second_derivatives= batch_second_derivatives00.sum ((2, 4))      
         return batch_first_derivatives, batch_second_derivatives
+
 
     def compute_dPsi_X(self, data_x, b_Xt, a_Xt, delta_t):
         """
@@ -418,7 +419,7 @@ class KoopmanSolverTorch(object):
             
             # Compute Hessian similarly
             hess0 = jacrev(lambda x: jacrev(self.dic)(x))(batch)  # (B, F, D, D)
-            hess = hess0.sum(dim=(2, 3))       # sum over D,D for consistency
+            hess = hess0.sum(dim=(2, 4))       # sum over D,D for consistency
             
             first_list.append(jac)
             second_list.append(hess)
@@ -427,9 +428,6 @@ class KoopmanSolverTorch(object):
         second_derivatives = torch.cat(second_list, dim=0)
         return first_derivatives, second_derivatives
 
-
-
-    # Modify the compute_neural_a_b method in KoopmanSolverTorch class
     def compute_neural_a_b(self, data_x, delta_t):
         """
         Compute the drift and diffusion coefficients using the SDECoefficientEstimator.
@@ -468,7 +466,7 @@ class KoopmanSolverTorch(object):
         )
         
         # Estimate the coefficients
-        b_Xt, a_Xt = sde_estimator.estimate_coefficients(X_t_1, X_t, delta_t)
+        b_Xt, a_Xt = sde_estimator.estimate_coefficients2(X_t_1, X_t, delta_t)
         
         # Handle a_Xt shape to ensure it's a 3D tensor even in 1D state space
         if state_dim == 1 and len(a_Xt.shape) == 2:
@@ -482,41 +480,42 @@ class KoopmanSolverTorch(object):
         
         return b_Xt, a_Xt_final
 
-    
     def compute_generator_L(self, data_x, b_Xt, a_Xt, delta_t, lambda_reg=0.01):
-        # Compute dPsi_X
-        data_x= data_x.to(device)
-        dPsi_X = self.compute_dPsi_X(data_x.to(device), b_Xt, a_Xt, delta_t)
-        self.dPsi_X= dPsi_X
-        print("dPsi_X shape: ", dPsi_X.shape)
-        
-        # Compute Psi_X^{-1}
-        psi_x = self.dic(data_x[:-1])
-        psi_x_inv = torch.linalg.pinv(psi_x)
-        print("psi_x shape: ", psi_x.shape)
-        print("psi_x_inv shape: ", psi_x_inv.shape)
+        """
+        Compute the generator matrix L via
+          L = (PsiX^T PsiX + λI)^{-1} (PsiX^T dPsi_X)
+        using a Cholesky solve and caching PsiX, instead of full pinv.
+        """
+        # 1) Move to GPU once
+        data_x = data_x.to(device)
 
+        # 2) Compute dPsi_X with your vectorized routine
+        dPsi_X = self.compute_dPsi_X(data_x, b_Xt, a_Xt, delta_t)
+        self.dPsi_X = dPsi_X
 
-        # Compute the transpose of psi_x
-        psi_x_transpose = psi_x.T.to (device) #torch.transpose(psi_x)
+        # 3) Evaluate dictionary on all but last sample, store PsiX
+        psi_x = self.dic(data_x[:-1])           # shape (M-1, F)
         
-       
-        # Compute the matrix product of psi_x^T and psi_x defined as 'G'
-        G = torch.matmul(psi_x_transpose, psi_x)        
-        # Add regularization term to avoid singularity issue
-        G_reg = G + lambda_reg * torch.eye(G.shape[0], dtype=G.dtype).to (device)        
-        # Compute the inverse of the regularized matrix product
-        G_inv = torch.linalg.pinv(G_reg)
-        # Compute the matrix product of psi_x^T and dPsi_X defined as 'A'
-        print (psi_x_transpose.device)
-        print (dPsi_X.device)
-        A = torch.matmul(psi_x_transpose, dPsi_X)        
-        # Cast A to match the data type of G_inv, if necessary
-        #A = torch.cast(A, dtype=G_inv.dtype)        
-        # Compute L = G^{-1} * A = (psi_x^T * psi_x)^{-1} * (psi_x^T * dPsi_X)
-        L_Psi = torch.matmul(G_inv, A)
-        self.L_Psi= L_Psi
+        # 4) Form Gram matrix G = PsiX^T PsiX  (F×F)
+        G = psi_x.T @ psi_x
+        
+        # 5) Regularize
+        I = torch.eye(G.shape[0], device=G.device, dtype=G.dtype)
+        G_reg = G + lambda_reg * I
+        
+        # 6) Compute RHS A = PsiX^T @ dPsi_X   (F×F)
+        A = psi_x.T @ dPsi_X
+
+        # 7) Solve G_reg · L_Psi = A via Cholesky (SPD solve)
+        #    This is much faster and more stable than pinv:
+        #    G_reg = L L^T
+        L = torch.linalg.cholesky(G_reg)        # lower-triangular L
+        L_Psi = torch.cholesky_solve(A, L)      # solves L L^T X = A
+
+        # 8) Cache and return
+        self.L_Psi = L_Psi
         return L_Psi
+
 
 
     
