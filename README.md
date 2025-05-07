@@ -22,8 +22,11 @@ The current implementation leverages PyTorch for efficient computation, particul
 3.  **Covergence of Training Loss Improvement (`solver_sdmd_torch_gpu4.py`)**:
     * Used `einsum` in `compute_dPsi_X`.
     * Now the value of training loss converges much faster and more stable.
+4. **Optimization for Handling Long Time Series (`solver_sdmd_torch_gpu5.py`)**:
+    * Rewrote `get_derivatives` to use batch processing.
+    * Optimized `compute_dPsi_X` for streamlined processing
 
-*(Note: `solver_sdmd_torch_gpu4.py` is still under testing.)*
+*(Note: `solver_sdmd_torch_gpu5.py` is still under testing.)*
 
 
 ## References
