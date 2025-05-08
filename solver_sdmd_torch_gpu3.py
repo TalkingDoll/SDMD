@@ -242,78 +242,7 @@ class KoopmanSolverTorch(object):
 
     def build_model(self):
         self.koopman_model = KoopmanModelTorch(dict_net=self.dic, target_dim=self.target_dim, k_dim=self.K.shape[0]).to(device)
-        
-    # def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
-    #                   batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
-    #     load_best = False
-    #     xx_train_tensor = torch.DoubleTensor((xx_train)).to(device)
-    #     yy_train_tensor = torch.DoubleTensor((yy_train)).to(device)
-    #     xx_test_tensor = torch.DoubleTensor((xx_test)).to(device)
-    #     yy_test_tensor = torch.DoubleTensor((yy_test)).to(device)
-    
-    #     train_dataset = torch.utils.data.TensorDataset(xx_train_tensor, yy_train_tensor)
-    #     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    
-    #     val_dataset = torch.utils.data.TensorDataset(xx_test_tensor, yy_test_tensor)
-    #     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    
-    #     n_epochs = epochs
-    #     best_loss = initial_loss
-    #     mlp_mdl = koopman_model
-    #     #optimizer = torch.optim.Adam(mlp_mdl.parameters(), lr=lrate, weight_decay=1e-5)
-    #     optimizer = koopman_optimizer
-    #     for param_group in optimizer.param_groups:
-    #         param_group['lr'] = lrate
-    #     criterion = nn.MSELoss()
-    
-    #     mlp_mdl.train()
-    #     val_loss_list = []
-    
-    #     for epoch in range(n_epochs):
-    #         train_loss = 0.0
-    #         for data, target in train_loader:
-    #             optimizer.zero_grad()
-    #             output = mlp_mdl(data, target)
-    #             zeros_tensor = torch.zeros_like(output)
-    #             loss = criterion(output, zeros_tensor)
-    #             loss.backward()
-    #             optimizer.step()
-    #             train_loss += loss.item() * data.size(0)
-    #         train_loss = train_loss / len(train_loader.dataset)
-    
-    #         val_loss = 0.0
-    #         with torch.no_grad():
-    #             for data, target in val_loader:
-    #                 output_val = mlp_mdl(data, target)
-    #                 zeros_tensor = torch.zeros_like(output_val)
-    #                 loss = criterion(output_val, zeros_tensor)
-    #                 val_loss += loss.item() * data.size(0)
-    #         val_loss = val_loss / len(val_loader.dataset)
-    #         val_loss_list.append(val_loss)
-    
-    #         print('Epoch: {} \tTraining Loss: {:.6f} val loss: {:.6f}'.format(
-    #             epoch + 1, train_loss, val_loss))
-    
-    #         if val_loss < best_loss:
-    #             print('saving, val loss enhanced:', val_loss, best_loss)
-    #             #torch.save(mlp_mdl.state_dict(), checkpoint_file)
-    #             torch.save({
-    #             'model_state_dict': mlp_mdl.state_dict(),
-    #             'optimizer_state_dict': optimizer.state_dict(),
-    #             }, checkpoint_file)
-    #             best_loss = val_loss
-    #             load_best = True
-    
-    #     if load_best:
-    #         #mlp_mdl.load_state_dict(torch.load(checkpoint_file))
-    #         checkpoint = torch.load(checkpoint_file)
-    #         mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
-    #         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #         mlp_mdl.layer_K.requires_grad = False
-    #         koopman_model = mlp_mdl
-    #         koopman_optimizer= optimizer
-    
-    #     return val_loss_list, best_loss
+
     
     def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
                       batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
@@ -483,33 +412,6 @@ class KoopmanSolverTorch(object):
         return dPsi_X
 
 
-    # def get_derivatives(self, inputs, batch_size=64):
-    #     """
-    #     Yield batch-wise Jacobian and Hessian to avoid storing full tensors.
-        
-    #     Args:
-    #         inputs (Tensor): shape (M, D)
-    #         batch_size (int): size of each batch
-            
-    #     Yields:
-    #         batch_J (Tensor): shape (batch_size, F, D)
-    #         batch_H (Tensor): shape (batch_size, F, D, D)
-    #     """
-    #     num_samples = inputs.shape[0]
-    #     num_batches = (num_samples + batch_size - 1) // batch_size
-    #     jac_fn = jacrev(self.dic)
-    #     hess_fn = jacrev(jac_fn)
-
-    #     for i in tqdm(range(num_batches), desc='Processing batches', unit='batch'):
-    #         start = i * batch_size
-    #         end = min((i + 1) * batch_size, num_samples)
-    #         batch_inputs = inputs[start:end]
-    #         batch_J = vmap(jac_fn)(batch_inputs)  # (batch_size, F, D)
-    #         batch_H = vmap(hess_fn)(batch_inputs)  # (batch_size, F, D, D)
-    #         yield batch_J, batch_H
-    #         del batch_J, batch_H
-    #         if torch.cuda.is_available():
-    #             torch.cuda.empty_cache()
     def get_derivatives(self, inputs, batch_size=64):
         """
         Yield batch-wise Jacobian and Hessian to avoid storing full tensors.
