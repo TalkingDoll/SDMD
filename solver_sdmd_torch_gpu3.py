@@ -535,79 +535,79 @@ class KoopmanSolverTorch(object):
 
 
     
-    def build(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
-        """Train Koopman model and calculate the final information,
-        such as eigenfunctions, eigenvalues and K.
-        For each outer training epoch, the koopman dictionary is trained
-        by several times (inner training epochs), and then compute matrix K.
-        Iterate the outer training.
+    # def build(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
+    #     """Train Koopman model and calculate the final information,
+    #     such as eigenfunctions, eigenvalues and K.
+    #     For each outer training epoch, the koopman dictionary is trained
+    #     by several times (inner training epochs), and then compute matrix K.
+    #     Iterate the outer training.
 
-        :param data_train: training data
-        :type data_train: [data at the current time, data at the next time]
-        :param data_valid: validation data
-        :type data_valid: [data at the current time, data at the next time]
-        :param epochs: the number of the outer epochs
-        :type epochs: int
-        :param batch_size: batch size
-        :type batch_size: int
-        :param lr: learning rate
-        :type lr: float
-        :param log_interval: the patience of learning decay
-        :type log_interval: int
-        :param lr_decay_factor: the ratio of learning decay
-        :type lr_decay_factor: float
-        """
-        # Separate training data
-        self.data_train = data_train
-        self.data_x_train, self.data_y_train = self.separate_data(self.data_train)
+    #     :param data_train: training data
+    #     :type data_train: [data at the current time, data at the next time]
+    #     :param data_valid: validation data
+    #     :type data_valid: [data at the current time, data at the next time]
+    #     :param epochs: the number of the outer epochs
+    #     :type epochs: int
+    #     :param batch_size: batch size
+    #     :type batch_size: int
+    #     :param lr: learning rate
+    #     :type lr: float
+    #     :param log_interval: the patience of learning decay
+    #     :type log_interval: int
+    #     :param lr_decay_factor: the ratio of learning decay
+    #     :type lr_decay_factor: float
+    #     """
+    #     # Separate training data
+    #     self.data_train = data_train
+    #     self.data_x_train, self.data_y_train = self.separate_data(self.data_train)
 
-        self.data_valid = data_valid
+    #     self.data_valid = data_valid
 
-        self.batch_size = batch_size
-        self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
+    #     self.batch_size = batch_size
+    #     self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
         
-        # Build the Koopman DL model
-        self.build_model()
+    #     # Build the Koopman DL model
+    #     self.build_model()
 
-        losses = []
-        curr_lr = lr
-        curr_last_loss = 1e12
-        self.koopman_optimizer= torch.optim.Adam(self.koopman_model.parameters(), lr=lr, weight_decay=1e-5)
-        for ii in arange(epochs):
-            start_time = time.time()
-            print(f"Outer Epoch {ii+1}/{epochs}")
+    #     losses = []
+    #     curr_lr = lr
+    #     curr_last_loss = 1e12
+    #     self.koopman_optimizer= torch.optim.Adam(self.koopman_model.parameters(), lr=lr, weight_decay=1e-5)
+    #     for ii in arange(epochs):
+    #         start_time = time.time()
+    #         print(f"Outer Epoch {ii+1}/{epochs}")
             
-            # One step for computing K
-            self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
+    #         # One step for computing K
+    #         self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
             
-            with torch.no_grad():
-                self.koopman_model.layer_K.weight.data = self.K
+    #         with torch.no_grad():
+    #             self.koopman_model.layer_K.weight.data = self.K
 
-            # Two steps for training PsiNN
-            curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs=4, lr=curr_lr, initial_loss=curr_last_loss)
+    #         # Two steps for training PsiNN
+    #         curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs=4, lr=curr_lr, initial_loss=curr_last_loss)
             
-            if curr_last_loss > curr_best_loss:
-                curr_last_loss = curr_best_loss
+    #         if curr_last_loss > curr_best_loss:
+    #             curr_last_loss = curr_best_loss
 
-            if ii % log_interval == 0:
-                losses.append(curr_losses[-1])
+    #         if ii % log_interval == 0:
+    #             losses.append(curr_losses[-1])
 
-                # Adjust learning rate:
-                if len(losses) > 2:
-                    if losses[-1] > losses[-2]:
-                        print("Error increased. Decay learning rate")
-                        curr_lr = lr_decay_factor * curr_lr
+    #             # Adjust learning rate:
+    #             if len(losses) > 2:
+    #                 if losses[-1] > losses[-2]:
+    #                     print("Error increased. Decay learning rate")
+    #                     curr_lr = lr_decay_factor * curr_lr
 
-            end_time = time.time()
-            epoch_time = end_time - start_time
-            print(f"Epoch {ii+1} time: {epoch_time:.2f} seconds")
+    #         end_time = time.time()
+    #         epoch_time = end_time - start_time
+    #         print(f"Epoch {ii+1} time: {epoch_time:.2f} seconds")
 
-        # Compute final information
-        #self.koopman_model.load_state_dict(torch.load(self.checkpoint_file))
-        checkpoint = torch.load(self.checkpoint_file)
-        self.koopman_model.load_state_dict(checkpoint['model_state_dict'])
-        self.koopman_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.compute_final_info(reg_final=0.01)
+    #     # Compute final information
+    #     #self.koopman_model.load_state_dict(torch.load(self.checkpoint_file))
+    #     checkpoint = torch.load(self.checkpoint_file)
+    #     self.koopman_model.load_state_dict(checkpoint['model_state_dict'])
+    #     self.koopman_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    #     self.compute_final_info(reg_final=0.01)
 
     def build_with_generator(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
         """Train Koopman model and calculate the final information,
