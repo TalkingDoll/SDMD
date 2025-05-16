@@ -19,13 +19,14 @@ The current implementation leverages PyTorch for efficient computation, particul
     * **`get_derivatives` Function**: Jacobian and Hessian computations (required for the $\mathcal{A}\psi$ terms) now use a batched approach (`torch.func.jacrev`). Inputs are split into mini-batches, derivatives are computed once per batch, and results are concatenated, significantly speeding up the process compared to per-feature loops.
     * The **`compute_generator_L`** function (related to calculating the generator approximation matrix $A_N = G^{-1}H$ or the SDMD update $\hat{G}^{-1}\hat{H}$) now uses **Cholesky factorization** instead of the pseudoinverse ($\dagger$) or direct inversion ($\hat{G}^{-1}$). This is often preferred for better numerical stability when dealing with potentially ill-conditioned Gram matrices ($\hat{G}$).
 
-3.  **Covergence of Training Loss Improvement (`solver_sdmd_torch_gpu3.py`)**:
+3.  **Covergence of Training Loss Improvement (`solver_sdmd_torch_gpu3/4.py`)**:
     * Used `einsum` in `compute_dPsi_X`.
     * Now the value of training loss converges much faster and more stable.
     * Rewrote `get_derivatives, fit_koopman_model` to use batch processing.
     * Optimized `compute_dPsi_X` for streamlined processing
+    * `solver_sdmd_torch_gpu3.py` used best trained model from last outer epoch and `solver_sdmd_torch_gpu4.py` used the last trained model from last outer epoch.
 
-*(Note: `solver_sdmd_torch_gpu3.py` is still under testing.)*
+*(Note: `solver_sdmd_torch_gpu3/4.py` is still under testing.)*
 
 
 ## References
