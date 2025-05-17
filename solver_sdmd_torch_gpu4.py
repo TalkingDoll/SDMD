@@ -243,78 +243,6 @@ class KoopmanSolverTorch(object):
     def build_model(self):
         self.koopman_model = KoopmanModelTorch(dict_net=self.dic, target_dim=self.target_dim, k_dim=self.K.shape[0]).to(device)
         
-    # def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
-    #                   batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
-    #     load_best = False
-    #     xx_train_tensor = torch.DoubleTensor((xx_train)).to(device)
-    #     yy_train_tensor = torch.DoubleTensor((yy_train)).to(device)
-    #     xx_test_tensor = torch.DoubleTensor((xx_test)).to(device)
-    #     yy_test_tensor = torch.DoubleTensor((yy_test)).to(device)
-    
-    #     train_dataset = torch.utils.data.TensorDataset(xx_train_tensor, yy_train_tensor)
-    #     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    
-    #     val_dataset = torch.utils.data.TensorDataset(xx_test_tensor, yy_test_tensor)
-    #     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    
-    #     n_epochs = epochs
-    #     best_loss = initial_loss
-    #     mlp_mdl = koopman_model
-    #     #optimizer = torch.optim.Adam(mlp_mdl.parameters(), lr=lrate, weight_decay=1e-5)
-    #     optimizer = koopman_optimizer
-    #     for param_group in optimizer.param_groups:
-    #         param_group['lr'] = lrate
-    #     criterion = nn.MSELoss()
-    
-    #     mlp_mdl.train()
-    #     val_loss_list = []
-    
-    #     for epoch in range(n_epochs):
-    #         train_loss = 0.0
-    #         for data, target in train_loader:
-    #             optimizer.zero_grad()
-    #             output = mlp_mdl(data, target)
-    #             zeros_tensor = torch.zeros_like(output)
-    #             loss = criterion(output, zeros_tensor)
-    #             loss.backward()
-    #             optimizer.step()
-    #             train_loss += loss.item() * data.size(0)
-    #         train_loss = train_loss / len(train_loader.dataset)
-    
-    #         val_loss = 0.0
-    #         with torch.no_grad():
-    #             for data, target in val_loader:
-    #                 output_val = mlp_mdl(data, target)
-    #                 zeros_tensor = torch.zeros_like(output_val)
-    #                 loss = criterion(output_val, zeros_tensor)
-    #                 val_loss += loss.item() * data.size(0)
-    #         val_loss = val_loss / len(val_loader.dataset)
-    #         val_loss_list.append(val_loss)
-    
-    #         print('Epoch: {} \tTraining Loss: {:.6f} val loss: {:.6f}'.format(
-    #             epoch + 1, train_loss, val_loss))
-    
-    #         if val_loss < best_loss:
-    #             print('saving, val loss enhanced:', val_loss, best_loss)
-    #             #torch.save(mlp_mdl.state_dict(), checkpoint_file)
-    #             torch.save({
-    #             'model_state_dict': mlp_mdl.state_dict(),
-    #             'optimizer_state_dict': optimizer.state_dict(),
-    #             }, checkpoint_file)
-    #             best_loss = val_loss
-    #             load_best = True
-    
-    #     if load_best:
-    #         #mlp_mdl.load_state_dict(torch.load(checkpoint_file))
-    #         checkpoint = torch.load(checkpoint_file)
-    #         mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
-    #         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #         mlp_mdl.layer_K.requires_grad = False
-    #         koopman_model = mlp_mdl
-    #         koopman_optimizer= optimizer
-    
-    #     return val_loss_list, best_loss
-    
     def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
                       batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
         # Remove unnecessary flag since it's always set to True
@@ -405,12 +333,13 @@ class KoopmanSolverTorch(object):
                 best_loss = val_loss
                 # No need for load_best flag
 
-        # # Load the best checkpoint directly
+        # # Load the best checkpoint directly from last (outer) epoch
         # checkpoint = torch.load(checkpoint_file)
         # mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
         # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
         # Do not load the best checkpoint directly
+        # Load the last checkpoint from last (outer) epoch
         mlp_mdl.layer_K.requires_grad = False
         koopman_model = mlp_mdl
         koopman_optimizer = optimizer
@@ -442,8 +371,6 @@ class KoopmanSolverTorch(object):
         H = vmap(hess_fn)(batch_inputs)  # (B, F, D, D)
 
         return J, H
-
-
 
     def compute_dPsi_X(self, data_x, b_Xt, a_Xt, delta_t):
         """
@@ -483,34 +410,6 @@ class KoopmanSolverTorch(object):
         self.dPsi_X = dPsi_X
         return dPsi_X
 
-
-    # def get_derivatives(self, inputs, batch_size=64):
-    #     """
-    #     Yield batch-wise Jacobian and Hessian to avoid storing full tensors.
-        
-    #     Args:
-    #         inputs (Tensor): shape (M, D)
-    #         batch_size (int): size of each batch
-            
-    #     Yields:
-    #         batch_J (Tensor): shape (batch_size, F, D)
-    #         batch_H (Tensor): shape (batch_size, F, D, D)
-    #     """
-    #     num_samples = inputs.shape[0]
-    #     num_batches = (num_samples + batch_size - 1) // batch_size
-    #     jac_fn = jacrev(self.dic)
-    #     hess_fn = jacrev(jac_fn)
-
-    #     for i in tqdm(range(num_batches), desc='Processing batches', unit='batch'):
-    #         start = i * batch_size
-    #         end = min((i + 1) * batch_size, num_samples)
-    #         batch_inputs = inputs[start:end]
-    #         batch_J = vmap(jac_fn)(batch_inputs)  # (batch_size, F, D)
-    #         batch_H = vmap(hess_fn)(batch_inputs)  # (batch_size, F, D, D)
-    #         yield batch_J, batch_H
-    #         del batch_J, batch_H
-    #         if torch.cuda.is_available():
-    #             torch.cuda.empty_cache()
     def get_derivatives(self, inputs, batch_size=64):
         """
         Yield batch-wise Jacobian and Hessian to avoid storing full tensors.
@@ -539,9 +438,6 @@ class KoopmanSolverTorch(object):
                 del batch_J, batch_H
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
-
-
-
 
     def compute_neural_a_b(self, data_x, delta_t):
         """
@@ -631,83 +527,6 @@ class KoopmanSolverTorch(object):
         self.L_Psi = L_Psi
         return L_Psi
 
-
-
-    
-    # def build(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
-    #     """Train Koopman model and calculate the final information,
-    #     such as eigenfunctions, eigenvalues and K.
-    #     For each outer training epoch, the koopman dictionary is trained
-    #     by several times (inner training epochs), and then compute matrix K.
-    #     Iterate the outer training.
-
-    #     :param data_train: training data
-    #     :type data_train: [data at the current time, data at the next time]
-    #     :param data_valid: validation data
-    #     :type data_valid: [data at the current time, data at the next time]
-    #     :param epochs: the number of the outer epochs
-    #     :type epochs: int
-    #     :param batch_size: batch size
-    #     :type batch_size: int
-    #     :param lr: learning rate
-    #     :type lr: float
-    #     :param log_interval: the patience of learning decay
-    #     :type log_interval: int
-    #     :param lr_decay_factor: the ratio of learning decay
-    #     :type lr_decay_factor: float
-    #     """
-    #     # Separate training data
-    #     self.data_train = data_train
-    #     self.data_x_train, self.data_y_train = self.separate_data(self.data_train)
-
-    #     self.data_valid = data_valid
-
-    #     self.batch_size = batch_size
-    #     self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
-        
-    #     # Build the Koopman DL model
-    #     self.build_model()
-
-    #     losses = []
-    #     curr_lr = lr
-    #     curr_last_loss = 1e12
-    #     self.koopman_optimizer= torch.optim.Adam(self.koopman_model.parameters(), lr=lr, weight_decay=1e-5)
-    #     for ii in arange(epochs):
-    #         start_time = time.time()
-    #         print(f"Outer Epoch {ii+1}/{epochs}")
-            
-    #         # One step for computing K
-    #         self.K = self.compute_K(self.dic_func, self.data_x_train, self.data_y_train, self.reg)
-            
-    #         with torch.no_grad():
-    #             self.koopman_model.layer_K.weight.data = self.K
-
-    #         # Two steps for training PsiNN
-    #         curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs=4, lr=curr_lr, initial_loss=curr_last_loss)
-            
-    #         if curr_last_loss > curr_best_loss:
-    #             curr_last_loss = curr_best_loss
-
-    #         if ii % log_interval == 0:
-    #             losses.append(curr_losses[-1])
-
-    #             # Adjust learning rate:
-    #             if len(losses) > 2:
-    #                 if losses[-1] > losses[-2]:
-    #                     print("Error increased. Decay learning rate")
-    #                     curr_lr = lr_decay_factor * curr_lr
-
-    #         end_time = time.time()
-    #         epoch_time = end_time - start_time
-    #         print(f"Epoch {ii+1} time: {epoch_time:.2f} seconds")
-
-    #     # Compute final information
-    #     #self.koopman_model.load_state_dict(torch.load(self.checkpoint_file))
-    #     checkpoint = torch.load(self.checkpoint_file)
-    #     self.koopman_model.load_state_dict(checkpoint['model_state_dict'])
-    #     self.koopman_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    #     self.compute_final_info(reg_final=0.01)
-
     def build_with_generator(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
         """Train Koopman model and calculate the final information,
         such as eigenfunctions, eigenvalues and K.
@@ -748,10 +567,7 @@ class KoopmanSolverTorch(object):
             b_Xt_np= self.b_Xt.detach().cpu().numpy()
             print ('saving FNN a and b to: ', self.a_b_file )
             joblib.dump ((a_Xt_np,b_Xt_np), self.a_b_file)
-            
-        # Build the Koopman DL model
-        # self.build_model()
-        
+          
         if not hasattr(self, 'koopman_model') or self.koopman_model is None:
             # First time: build the model once, only pass dictionary network parameters to optimizer
             self.build_model()
@@ -762,11 +578,6 @@ class KoopmanSolverTorch(object):
         else:
             # Subsequent times: check dimensions, then update layer_K
             assert self.K.shape[0] == self.koopman_model.k_dim, "K matrix dimensions mismatch"
-
-        # In either case, always assign the latest K to layer_K and freeze it
-        with torch.no_grad():
-            self.koopman_model.layer_K.weight.copy_(self.K.T)
-        self.koopman_model.layer_K.weight.requires_grad = False
 
         losses = []
         curr_lr = lr
@@ -780,7 +591,7 @@ class KoopmanSolverTorch(object):
             start_time = time.time()
             print(f"Outer Epoch {ii+1}/{epochs}")
             
-            # One step for computing L and  K
+            # One step for computing L and K
             self. L_Psi = self.compute_generator_L(data_x_train_tensor, self.b_Xt, self. a_Xt, self.delta_t)
             self.K = self.compute_K_with_generator()
             
@@ -788,8 +599,8 @@ class KoopmanSolverTorch(object):
                 # self.koopman_model.layer_K.weight.data = self.K
                 self.koopman_model.layer_K.weight.data.copy_(self.K.T)
 
-            #  steps (inner epochs) for training PsiNN, the number of inner epochs is given by epochs parameter below, here epochs= 4
-            curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs = 2, lr=curr_lr, initial_loss=curr_last_loss)
+            # steps (inner epochs) for training PsiNN, the number of inner epochs is given by epochs parameter below, here epochs= 4
+            curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs = 3, lr=curr_lr, initial_loss=curr_last_loss)
             
             if curr_last_loss > curr_best_loss:
                 curr_last_loss = curr_best_loss
