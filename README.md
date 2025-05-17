@@ -14,19 +14,17 @@ The current implementation leverages PyTorch for efficient computation, particul
 1.  **SDE Coefficient Estimation (`sde_coefficients_estimator.py`)**:
     * The calculation of Stochastic Differential Equation (SDE) coefficients ($b(x), \sigma(x)$) is now modularized. `solver_sdmd_torch_gpu2.py` calls the dedicated `sde_coefficients_estimator.py` script instead of using embedded code for computing SDE's coefficients.
 
-2.  **GPU Parallelization Enhancements + Numerical Stability Improvement (`solver_sdmd_torch_gpu2.py`)**:
+2.  **GPU Parallelization Enhancements + Numerical Stability Improvement + Covergence of Training Loss Improvement (`solver_sdmd_torch_gpu2.py`)**:
     * **`compute_dPsi_X` Function**: Optimized for GPU parallelism. Nested loops over samples and features were replaced with broadcasted tensor operations, allowing the entire `dPsi_X` (related to the action of the generator on basis functions) to be computed efficiently in parallel.
     * **`get_derivatives` Function**: Jacobian and Hessian computations (required for the $\mathcal{A}\psi$ terms) now use a batched approach (`torch.func.jacrev`). Inputs are split into mini-batches, derivatives are computed once per batch, and results are concatenated, significantly speeding up the process compared to per-feature loops.
     * The **`compute_generator_L`** function (related to calculating the generator approximation matrix $A_N = G^{-1}H$ or the SDMD update $\hat{G}^{-1}\hat{H}$) now uses **Cholesky factorization** instead of the pseudoinverse ($\dagger$) or direct inversion ($\hat{G}^{-1}$). This is often preferred for better numerical stability when dealing with potentially ill-conditioned Gram matrices ($\hat{G}$).
-
-3.  **Covergence of Training Loss Improvement (`solver_sdmd_torch_gpu3/4.py`)**:
     * Used `einsum` in `compute_dPsi_X`.
     * Now the value of training loss converges much faster and more stable.
     * Rewrote `get_derivatives, fit_koopman_model` to use batch processing.
     * Optimized `compute_dPsi_X` for streamlined processing
-    * `solver_sdmd_torch_gpu3.py` used best trained model from last outer epoch and `solver_sdmd_torch_gpu4.py` used the last trained model from last outer epoch.
+    * `solver_sdmd_torch_gpu2.py` used the last trained model from last outer epoch and can also switch to use best trained model from last outer epoch.
 
-*(Note: `solver_sdmd_torch_gpu3/4.py` is still under testing.)*
+*(Note: `solver_sdmd_torch_gpu2.py` is still under testing.)*
 
 
 ## References
