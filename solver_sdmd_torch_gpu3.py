@@ -338,10 +338,10 @@ class KoopmanSolverTorch(object):
         checkpoint = torch.load(checkpoint_file)
         mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        # This freezes the Koopman operator matrix layer - confirm this is needed
-        mlp_mdl.layer_K.requires_grad = False
-        koopman_model = mlp_mdl
-        koopman_optimizer = optimizer
+        # # This freezes the Koopman operator matrix layer
+        # mlp_mdl.layer_K.requires_grad = False
+        # koopman_model = mlp_mdl
+        # koopman_optimizer = optimizer
 
         return val_loss_list, best_loss
 
