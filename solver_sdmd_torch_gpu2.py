@@ -344,18 +344,18 @@ class KoopmanSolverTorch(object):
 
     def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train,
                           xx_test, yy_test, batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
-        # 将数据转换为张量并移动到设备
+        # Convert data to tensors and move to device
         from torch.cuda.amp import autocast, GradScaler
 
-        # 创建学习率调度器
+        # Create a learning rate scheduler
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             koopman_optimizer, mode='min', factor=0.5, patience=5, verbose=True
         )
 
-        # 创建早停对象
+        # Create an early stopping object
         early_stopping = EarlyStopping(patience=self.patience, min_delta=self.min_delta)
 
-        # 创建混合精度训练的缩放器
+        # Create a scaler for mixed-precision training
         scaler = GradScaler()
 
         train_dataset = torch.utils.data.TensorDataset(
@@ -394,13 +394,13 @@ class KoopmanSolverTorch(object):
 
                 koopman_optimizer.zero_grad()
 
-                # 使用混合精度训练
+                # Use mixed-precision training
                 with autocast():
                     output = mlp_mdl(data, target)
                     zeros_tensor = torch.zeros_like(output)
                     loss = criterion(output, zeros_tensor)
 
-                # 使用缩放器处理反向传播
+                # Use the scaler for backpropagation
                 scaler.scale(loss).backward()
                 scaler.step(koopman_optimizer)
                 scaler.update()
@@ -409,7 +409,7 @@ class KoopmanSolverTorch(object):
 
             train_loss = train_loss / len(train_loader.dataset)
 
-            # 验证阶段
+            # Validation phase
             val_loss = 0.0
             mlp_mdl.eval()
             with torch.no_grad():
@@ -423,12 +423,12 @@ class KoopmanSolverTorch(object):
             val_loss = val_loss / len(val_loader.dataset)
             val_loss_list.append(val_loss)
 
-            # 更新学习率调度器
+            # Update the learning rate scheduler
             scheduler.step(val_loss)
 
             print(f'Epoch: {epoch + 1} \tTraining Loss: {train_loss:.6f} val loss: {val_loss:.6f}')
 
-            # 检查是否需要保存最佳模型
+            # Check if the best model needs to be saved
             if val_loss < best_loss:
                 print(f'Saving model, val loss improved from {best_loss:.6f} to {val_loss:.6f}')
                 torch.save({
@@ -438,13 +438,13 @@ class KoopmanSolverTorch(object):
                 }, checkpoint_file)
                 best_loss = val_loss
 
-            # 检查是否需要早停
+            # Check for early stopping
             early_stopping(val_loss)
             if early_stopping.early_stop:
                 print("Early stopping triggered")
                 break
 
-        # 加载最佳模型
+        # Load the best model
         checkpoint = torch.load(checkpoint_file)
         mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
         koopman_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -682,12 +682,12 @@ class KoopmanSolverTorch(object):
             print ('saving FNN a and b to: ', self.a_b_file )
             joblib.dump ((a_Xt_np,b_Xt_np), self.a_b_file)
 
-        # 修改学习率优化器和调度器的初始化
+        # Modify the initialization of the learning rate optimizer and scheduler.
         if not hasattr(self, 'koopman_model') or self.koopman_model is None:
             self.build_model()
             dict_params = [p for n, p in self.koopman_model.named_parameters()
                            if "layer_K.weight" not in n]
-            self.koopman_optimizer = torch.optim.AdamW(  # 使用 AdamW 优化器
+            self.koopman_optimizer = torch.optim.AdamW(  # Use AdamW optimizer
                 dict_params, lr=lr, weight_decay=1e-5
             )
         else:
