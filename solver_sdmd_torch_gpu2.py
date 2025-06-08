@@ -19,17 +19,39 @@ torch.set_default_dtype(torch.float64)
 # device = 'cuda'
 # device = 'cpu'
 
+class EarlyStopping:
+    def __init__(self, patience=7, min_delta=0, verbose=True):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.best_loss = None
+        self.early_stop = False
+        self.verbose = verbose
+
+    def __call__(self, val_loss):
+        if self.best_loss is None:
+            self.best_loss = val_loss
+        elif val_loss > self.best_loss - self.min_delta:
+            self.counter += 1
+            if self.verbose:
+                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                self.early_stop = True
+        else:
+            self.best_loss = val_loss
+            self.counter = 0
+
 
 class KoopmanNNTorch(nn.Module):
     def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, **kwargs):
         super(KoopmanNNTorch, self).__init__()
         self.layer_sizes = layer_sizes
         self.n_psi_train = n_psi_train
-        
+
         self.layers = nn.ModuleList()
         bias = False
         n_layers = len(layer_sizes)
-        
+
         # First layer
         self.layers.append(nn.Linear(input_size, layer_sizes[0], bias=bias))
         # Hidden layers
@@ -38,29 +60,29 @@ class KoopmanNNTorch(nn.Module):
         # Activation and output layer
         self.layers.append(nn.Tanh())
         self.layers.append(nn.Linear(layer_sizes[-1], n_psi_train, bias=True))
-    
+
     def forward(self, x):
         # 1) If input is a 1D vector, add batch dimension
         squeeze_back = False
         if x.dim() == 1:
             x = x.unsqueeze(0)  # Convert to (1, D)
             squeeze_back = True
-        
+
         # 2) Save original input
         in_x = x
-        
+
         # 3) Normal forward pass
         for layer in self.layers:
             x = layer(x)
-        
+
         # 4) Concatenate constant term, original input and network output
         const_out = torch.ones_like(in_x[:, :1])
         out = torch.cat([const_out, in_x, x], dim=1)
-        
+
         # 5) If batch dimension was added at the beginning, remove it
         if squeeze_back:
             out = out.squeeze(0)  # Restore to original 1D
-        
+
         return out
     
 
@@ -82,29 +104,30 @@ class KoopmanModelTorch(nn.Module):
         return outputs
 
 
-
 class MLPModel(nn.Module):
-    def __init__(self, num_features,num_outs, n_hid=128, dropout=0.1):
+    def __init__(self, num_features, num_outs, n_hid=128, dropout=0.1):
         super().__init__()
         self.model = nn.Sequential(
-            
+            nn.BatchNorm1d(num_features),
             nn.Linear(num_features, n_hid),
             nn.ReLU(),
-            
-            nn.Dropout(dropout),            
-            #nn.Linear(n_hid, n_hid // 4),
-            #nn.ReLU(),
-            #nn.BatchNorm1d(n_hid // 4),
-            #nn.Dropout(dropout),
-            nn.Linear(n_hid , num_outs),
+            nn.BatchNorm1d(n_hid),
+            nn.Dropout(dropout),
+            nn.Linear(n_hid, n_hid // 2),
+            nn.ReLU(),
+            nn.BatchNorm1d(n_hid // 2),
+            nn.Dropout(dropout),
+            nn.Linear(n_hid // 2, num_outs)
         )
+
+        # 使用 Kaiming 初始化
         for m in self.model:
             if isinstance(m, nn.Linear):
-                nn.init.xavier_normal_(m.weight)
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, input_tensor):
-        return self.model(input_tensor)
+    def forward(self, x):
+        return self.model(x)
         
 class KoopmanSolverTorch(object):
     '''
@@ -121,8 +144,10 @@ class KoopmanSolverTorch(object):
         psi_y (None): Placeholder for the feature matrix of the output data.
     '''
 
-    def __init__(self, dic, target_dim, reg=0.0, checkpoint_file='example_koopman_net001.torch', fnn_checkpoint_file= 'example_fnn001.torch', 
-                a_b_file= None, generator_batch_size= 4, fnn_batch_size= 32, delta_t= 0.1):
+    def __init__(self, dic, target_dim, reg=0.0, checkpoint_file='example_koopman_net001.torch',
+                 fnn_checkpoint_file='example_fnn001.torch', a_b_file=None,
+                 generator_batch_size=4, fnn_batch_size=32, delta_t=0.1,
+                 patience=7, min_delta=1e-4):
         """Initializer
 
         :param dic: dictionary
@@ -146,6 +171,8 @@ class KoopmanSolverTorch(object):
         self.fnn_batch_size= fnn_batch_size
         self.delta_t= delta_t
         self.a_b_file= a_b_file
+        self.patience = patience
+        self.min_delta = min_delta
 
     def separate_data(self, data):
         data_x = data[0]
@@ -242,71 +269,149 @@ class KoopmanSolverTorch(object):
 
     def build_model(self):
         self.koopman_model = KoopmanModelTorch(dict_net=self.dic, target_dim=self.target_dim, k_dim=self.K.shape[0]).to(device)
-
-    
-    def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
-                      batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
-        # Remove unnecessary flag since it's always set to True
-        # load_best = False
         
-        # Keep data on CPU, use pin_memory to accelerate subsequent transfers
+    # def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train, xx_test, yy_test,
+    #                   batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
+    #     load_best = False
+    #     xx_train_tensor = torch.DoubleTensor((xx_train)).to(device)
+    #     yy_train_tensor = torch.DoubleTensor((yy_train)).to(device)
+    #     xx_test_tensor = torch.DoubleTensor((xx_test)).to(device)
+    #     yy_test_tensor = torch.DoubleTensor((yy_test)).to(device)
+    
+    #     train_dataset = torch.utils.data.TensorDataset(xx_train_tensor, yy_train_tensor)
+    #     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+    
+    #     val_dataset = torch.utils.data.TensorDataset(xx_test_tensor, yy_test_tensor)
+    #     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+    
+    #     n_epochs = epochs
+    #     best_loss = initial_loss
+    #     mlp_mdl = koopman_model
+    #     #optimizer = torch.optim.Adam(mlp_mdl.parameters(), lr=lrate, weight_decay=1e-5)
+    #     optimizer = koopman_optimizer
+    #     for param_group in optimizer.param_groups:
+    #         param_group['lr'] = lrate
+    #     criterion = nn.MSELoss()
+    
+    #     mlp_mdl.train()
+    #     val_loss_list = []
+    
+    #     for epoch in range(n_epochs):
+    #         train_loss = 0.0
+    #         for data, target in train_loader:
+    #             optimizer.zero_grad()
+    #             output = mlp_mdl(data, target)
+    #             zeros_tensor = torch.zeros_like(output)
+    #             loss = criterion(output, zeros_tensor)
+    #             loss.backward()
+    #             optimizer.step()
+    #             train_loss += loss.item() * data.size(0)
+    #         train_loss = train_loss / len(train_loader.dataset)
+    
+    #         val_loss = 0.0
+    #         with torch.no_grad():
+    #             for data, target in val_loader:
+    #                 output_val = mlp_mdl(data, target)
+    #                 zeros_tensor = torch.zeros_like(output_val)
+    #                 loss = criterion(output_val, zeros_tensor)
+    #                 val_loss += loss.item() * data.size(0)
+    #         val_loss = val_loss / len(val_loader.dataset)
+    #         val_loss_list.append(val_loss)
+    
+    #         print('Epoch: {} \tTraining Loss: {:.6f} val loss: {:.6f}'.format(
+    #             epoch + 1, train_loss, val_loss))
+    
+    #         if val_loss < best_loss:
+    #             print('saving, val loss enhanced:', val_loss, best_loss)
+    #             #torch.save(mlp_mdl.state_dict(), checkpoint_file)
+    #             torch.save({
+    #             'model_state_dict': mlp_mdl.state_dict(),
+    #             'optimizer_state_dict': optimizer.state_dict(),
+    #             }, checkpoint_file)
+    #             best_loss = val_loss
+    #             load_best = True
+    
+    #     if load_best:
+    #         #mlp_mdl.load_state_dict(torch.load(checkpoint_file))
+    #         checkpoint = torch.load(checkpoint_file)
+    #         mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
+    #         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    #         mlp_mdl.layer_K.requires_grad = False
+    #         koopman_model = mlp_mdl
+    #         koopman_optimizer= optimizer
+    
+    #     return val_loss_list, best_loss
+
+    def fit_koopman_model(self, koopman_model, koopman_optimizer, checkpoint_file, xx_train, yy_train,
+                          xx_test, yy_test, batch_size=32, lrate=1e-4, epochs=1000, initial_loss=1e15):
+        # 将数据转换为张量并移动到设备
+        from torch.cuda.amp import autocast, GradScaler
+
+        # 创建学习率调度器
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            koopman_optimizer, mode='min', factor=0.5, patience=5, verbose=True
+        )
+
+        # 创建早停对象
+        early_stopping = EarlyStopping(patience=self.patience, min_delta=self.min_delta)
+
+        # 创建混合精度训练的缩放器
+        scaler = GradScaler()
+
         train_dataset = torch.utils.data.TensorDataset(
             torch.DoubleTensor(xx_train),
             torch.DoubleTensor(yy_train)
         )
         train_loader = torch.utils.data.DataLoader(
-            train_dataset, 
-            batch_size=batch_size, 
-            shuffle=True,  # Changed to True for better training dynamics
+            train_dataset,
+            batch_size=batch_size,
+            shuffle=True,
             pin_memory=True
         )
-        
+
         val_dataset = torch.utils.data.TensorDataset(
             torch.DoubleTensor(xx_test),
             torch.DoubleTensor(yy_test)
         )
         val_loader = torch.utils.data.DataLoader(
-            val_dataset, 
-            batch_size=batch_size, 
-            shuffle=False,  # Keep validation data in order
+            val_dataset,
+            batch_size=batch_size,
+            shuffle=False,
             pin_memory=True
         )
 
-        n_epochs = epochs
-        best_loss = initial_loss
         mlp_mdl = koopman_model
-        optimizer = koopman_optimizer
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lrate
         criterion = nn.MSELoss()
-
-        mlp_mdl.train()
         val_loss_list = []
+        best_loss = initial_loss
 
-        for epoch in range(n_epochs):
+        for epoch in range(epochs):
             train_loss = 0.0
+            mlp_mdl.train()
+
             for data, target in train_loader:
-                # Only move the current batch data to GPU when needed
                 data, target = data.to(device), target.to(device)
-                
-                optimizer.zero_grad()
-                # Note: This model expects both input and target as inputs
-                # This is a specific design of KoopmanModelTorch, not a mistake
-                output = mlp_mdl(data, target)
-                zeros_tensor = torch.zeros_like(output)
-                loss = criterion(output, zeros_tensor)
-                loss.backward()
-                optimizer.step()
+
+                koopman_optimizer.zero_grad()
+
+                # 使用混合精度训练
+                with autocast():
+                    output = mlp_mdl(data, target)
+                    zeros_tensor = torch.zeros_like(output)
+                    loss = criterion(output, zeros_tensor)
+
+                # 使用缩放器处理反向传播
+                scaler.scale(loss).backward()
+                scaler.step(koopman_optimizer)
+                scaler.update()
+
                 train_loss += loss.item() * data.size(0)
-                
-                # Explicitly release GPU tensors that are no longer needed
-                del data, target, output, zeros_tensor
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-                    
+
             train_loss = train_loss / len(train_loader.dataset)
 
+            # 验证阶段
             val_loss = 0.0
+            mlp_mdl.eval()
             with torch.no_grad():
                 for data, target in val_loader:
                     data, target = data.to(device), target.to(device)
@@ -314,37 +419,40 @@ class KoopmanSolverTorch(object):
                     zeros_tensor = torch.zeros_like(output_val)
                     loss = criterion(output_val, zeros_tensor)
                     val_loss += loss.item() * data.size(0)
-                    
-                    del data, target, output_val, zeros_tensor
-                    if torch.cuda.is_available():
-                        torch.cuda.empty_cache()
-                        
+
             val_loss = val_loss / len(val_loader.dataset)
             val_loss_list.append(val_loss)
 
-            print('Epoch: {} \tTraining Loss: {:.6f} val loss: {:.6f}'.format(
-                epoch + 1, train_loss, val_loss))
+            # 更新学习率调度器
+            scheduler.step(val_loss)
 
+            print(f'Epoch: {epoch + 1} \tTraining Loss: {train_loss:.6f} val loss: {val_loss:.6f}')
+
+            # 检查是否需要保存最佳模型
             if val_loss < best_loss:
-                print('saving, val loss enhanced:', val_loss, best_loss)
+                print(f'Saving model, val loss improved from {best_loss:.6f} to {val_loss:.6f}')
                 torch.save({
                     'model_state_dict': mlp_mdl.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
+                    'optimizer_state_dict': koopman_optimizer.state_dict(),
+                    'scheduler_state_dict': scheduler.state_dict(),
                 }, checkpoint_file)
                 best_loss = val_loss
-                # No need for load_best flag
 
-        # # Load the best checkpoint directly from last (outer) epoch
-        # checkpoint = torch.load(checkpoint_file)
-        # mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
-        # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            # 检查是否需要早停
+            early_stopping(val_loss)
+            if early_stopping.early_stop:
+                print("Early stopping triggered")
+                break
 
-        # Do not load the best checkpoint directly
-        # Load the last checkpoint from last (outer) epoch
+        # 加载最佳模型
+        checkpoint = torch.load(checkpoint_file)
+        mlp_mdl.load_state_dict(checkpoint['model_state_dict'])
+        koopman_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
         mlp_mdl.layer_K.requires_grad = False
         koopman_model = mlp_mdl
-        koopman_optimizer = optimizer
-
+        koopman_optimizer = koopman_optimizer
         return val_loss_list, best_loss
 
     def train_psi(self, koopman_model, koopman_optimizer, epochs, lr, initial_loss=1e15):
@@ -443,6 +551,8 @@ class KoopmanSolverTorch(object):
                     torch.cuda.empty_cache()
 
 
+
+
     def compute_neural_a_b(self, data_x, delta_t):
         """
         Compute the drift and diffusion coefficients using the SDECoefficientEstimator.
@@ -531,7 +641,6 @@ class KoopmanSolverTorch(object):
         self.L_Psi = L_Psi
         return L_Psi
 
-
     def build_with_generator(self, data_train, data_valid, epochs, batch_size, lr, log_interval, lr_decay_factor):
         """Train Koopman model and calculate the final information,
         such as eigenfunctions, eigenvalues and K.
@@ -572,27 +681,33 @@ class KoopmanSolverTorch(object):
             b_Xt_np= self.b_Xt.detach().cpu().numpy()
             print ('saving FNN a and b to: ', self.a_b_file )
             joblib.dump ((a_Xt_np,b_Xt_np), self.a_b_file)
-          
+
+        # 修改学习率优化器和调度器的初始化
         if not hasattr(self, 'koopman_model') or self.koopman_model is None:
-            # First time: build the model once, only pass dictionary network parameters to optimizer
             self.build_model()
-            dict_params = [p for n,p in self.koopman_model.named_parameters()
-                        if "layer_K.weight" not in n]
-            self.koopman_optimizer = torch.optim.Adam(
-                dict_params, lr=lr, weight_decay=1e-5)
+            dict_params = [p for n, p in self.koopman_model.named_parameters()
+                           if "layer_K.weight" not in n]
+            self.koopman_optimizer = torch.optim.AdamW(  # 使用 AdamW 优化器
+                dict_params, lr=lr, weight_decay=1e-5
+            )
         else:
             # Subsequent times: check dimensions, then update layer_K
             assert self.K.shape[0] == self.koopman_model.k_dim, "K matrix dimensions mismatch"
+
+        # # In either case, always assign the latest K to layer_K and freeze it
+        # with torch.no_grad():
+        #     self.koopman_model.layer_K.weight.copy_(self.K)
+        # self.koopman_model.layer_K.weight.requires_grad = False
 
         losses = []
         curr_lr = lr
         curr_last_loss = 1e15
         # self.koopman_optimizer = torch.optim.Adam(self.koopman_model.parameters(), lr=lr, weight_decay=1e-5)
         for ii in arange(epochs):
-            # Starting outer epoch. In each outer epoch we compute generator L
-            # Koopman operator K is computed from L each outer epoch,
+            #starting outer epoch. In each outer epoch we compute generator L
+            #Koopman operator K is computed from L each outer epoch,
             # and the matrix K is set as weighths of layer K of our Koopman NN. 
-            # Then we do several steps of training our NN that is the dictionary
+            #then we do several steps of training our NN that is the dictionary
             start_time = time.time()
             print(f"Outer Epoch {ii+1}/{epochs}")
             
@@ -601,11 +716,18 @@ class KoopmanSolverTorch(object):
             self.K = self.compute_K_with_generator()
             
             with torch.no_grad():
-                self.koopman_model.layer_K.weight.data.copy_(self.K)
+                # self.koopman_model.layer_K.weight.data = self.K
+                self.koopman_model.layer_K.weight.data.copy_(self.K) # self.K.T
             self.koopman_model.layer_K.weight.requires_grad = False
 
             # steps (inner epochs) for training PsiNN, the number of inner epochs is given by epochs parameter below, here epochs= 4
-            curr_losses, curr_best_loss = self.train_psi(self.koopman_model, self.koopman_optimizer, epochs = 2, lr=curr_lr, initial_loss=curr_last_loss)
+            curr_losses, curr_best_loss = self.train_psi(
+                self.koopman_model,
+                self.koopman_optimizer,
+                epochs=2,
+                lr=curr_lr,
+                initial_loss=curr_last_loss
+            )
             
             if curr_last_loss > curr_best_loss:
                 curr_last_loss = curr_best_loss
@@ -624,6 +746,7 @@ class KoopmanSolverTorch(object):
             print(f"Epoch {ii+1} time: {epoch_time:.2f} seconds")
 
         # Compute final information
+        #self.koopman_model.load_state_dict(torch.load(self.checkpoint_file))
         checkpoint = torch.load(self.checkpoint_file)
         self.koopman_model.load_state_dict(checkpoint['model_state_dict'])
         self.koopman_optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
