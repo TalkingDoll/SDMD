@@ -31,14 +31,21 @@ The current implementation leverages PyTorch for efficient computation, particul
 If you use SDMD or this code in your research, please cite the following paper:
 
 ```bibtex
-@misc{xu2025datadrivenframeworkkoopmansemigroup,
-      title={A Data-Driven Framework for Koopman Semigroup Estimation in Stochastic Dynamical Systems},
-      author={Yuanchao Xu and Kaidi Shao and Isao Ishikawa and Yuka Hashimoto and Nikos Logothetis and Zhongwei Shen},
-      year={2025},
-      eprint={2501.13301},
-      archivePrefix={arXiv},
-      primaryClass={math.DS},
-      url={[https://arxiv.org/abs/2501.13301](https://arxiv.org/abs/2501.13301)},
+@article{10.1063/5.0283640,
+    author = {Xu, Yuanchao and Shao, Kaidi and Ishikawa, Isao and Hashimoto, Yuka and Logothetis, Nikos and Shen, Zhongwei},
+    title = {A data-driven framework for Koopman semigroup estimation in stochastic dynamical systems},
+    journal = {Chaos: An Interdisciplinary Journal of Nonlinear Science},
+    volume = {35},
+    number = {10},
+    pages = {103123},
+    year = {2025},
+    month = {10},
+    abstract = {We present Stochastic Dynamic Mode Decomposition (SDMD), a novel data-driven framework for approximating the Koopman semigroup in stochastic dynamical systems. Unlike existing approaches, SDMD explicitly incorporates sampling time into its formulation to ensure numerical stability and precision in the presence of noise. By directly approximating the Koopman semigroup rather than its generator, SDMD avoids computationally expensive matrix exponential calculation, providing a more practically efficient pathway for analyzing stochastic dynamics. The framework also leverages neural networks for automated basis selection, minimizing manual effort while preserving computational efficiency. We establish SDMD’s theoretical foundations through rigorous convergence guarantees across three critical limits in order: large data, infinitesimal sampling time, and increasing dictionary size. Numerical experiments on canonical stochastic systems including oscillatory system, mean-reverting processes, metastable system, and a neural mass model demonstrate SDMD’s effectiveness in capturing the spectral properties of the Koopman semigroup, even in systems with complex random behavior.},
+    issn = {1054-1500},
+    doi = {10.1063/5.0283640},
+    url = {https://doi.org/10.1063/5.0283640},
+    eprint = {https://pubs.aip.org/aip/cha/article-pdf/doi/10.1063/5.0283640/20757477/103123_1_5.0283640.pdf},
 }
+
 ```
 
