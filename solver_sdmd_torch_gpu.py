@@ -120,7 +120,7 @@ class MLPModel(nn.Module):
             nn.Linear(n_hid // 2, num_outs)
         )
 
-        # 使用 Kaiming 初始化
+        # Use Kaiming initialization
         for m in self.model:
             if isinstance(m, nn.Linear):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
