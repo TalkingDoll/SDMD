@@ -7,21 +7,35 @@ This repository contains the implementation of Stochastic Dynamic Mode Decomposi
 
 * [Full Paper on arXiv](https://arxiv.org/abs/2501.13301)
 
-## Recent Updates
+## Code Overview
 
-The current implementation leverages PyTorch for efficient computation, particularly on GPUs. Recent updates focus on improving performance and modularity:
+The current codebase is organized around PyTorch implementations of SDMD and two standard Koopman baselines. The main files and folders are:
 
-1.  **SDE Coefficient Estimation (`sde_coefficients_estimator.py`)**:
-    * The calculation of Stochastic Differential Equation (SDE) coefficients ($b(x), \sigma(x)$) is now modularized. `solver_sdmd_torch_gpu.py` calls the dedicated `sde_coefficients_estimator.py` script instead of using embedded code for computing SDE's coefficients.
+1. **`solver_sdmd_torch_gpu.py`**:
+   * Main SDMD implementation. It builds a neural dictionary, trains the Koopman model, computes the SDMD transition matrix, and provides eigenvalue/eigenfunction utilities.
+   * Includes GPU-oriented batching for dictionary derivatives, generator terms, and model training.
+   * Uses the modular SDE coefficient estimator when drift and diffusion terms are needed for generator-based computations.
 
-2.  **GPU Parallelization Enhancements + Numerical Stability Improvement + Convergence of Training Loss Improvement (`solver_sdmd_torch_gpu.py`)**:
-    * **`compute_dPsi_X` Function**: Optimized for GPU parallelism. Nested loops over samples and features were replaced with broadcasted tensor operations, allowing the entire `dPsi_X` (related to the action of the generator on basis functions) to be computed efficiently in parallel.
-    * **`get_derivatives` Function**: Jacobian and Hessian computations (required for the $\mathcal{A}\psi$ terms) now use a batched approach (`torch.func.jacrev`). Inputs are split into mini-batches, derivatives are computed once per batch, and results are concatenated, significantly speeding up the process compared to per-feature loops.
-    * The **`compute_generator_L`** function (related to calculating the generator approximation matrix $A_N = G^{-1}H$ or the SDMD update $\hat{G}^{-1}\hat{H}$) now uses **Cholesky factorization** instead of the pseudoinverse ($\dagger$) or direct inversion ($\hat{G}^{-1}$). This is often preferred for better numerical stability when dealing with potentially ill-conditioned Gram matrices ($\hat{G}$).
-    * Used `einsum` in `compute_dPsi_X`. Now the value of training loss converges much faster and more stable.
-    * Rewrote `get_derivatives, fit_koopman_model` to use batch processing.
-    * Optimized `compute_dPsi_X` for streamlined processing
-    * `solver_sdmd_torch_gpu.py` used the last trained model from last outer epoch and can also switch to use best trained model from last outer epoch.
+2. **`solver_edmd_torch_gpu.py`**:
+   * PyTorch EDMD baseline for learning a discrete-time Koopman operator from paired trajectory data.
+   * Shares the neural dictionary structure with the SDMD code and provides utilities for Koopman matrix construction, eigendecomposition, and eigenfunction evaluation.
+
+3. **`solver_gedmd_torch_gpu.py`**:
+   * PyTorch gEDMD baseline for generator-based Koopman approximation.
+   * Computes derivatives of the learned dictionary and combines them with estimated SDE drift/diffusion coefficients.
+
+4. **`sde_coefficients_estimator.py`**:
+   * Standalone neural estimator for SDE coefficients.
+   * Trains an MLP to predict one-step state transitions, then estimates the drift term $b(x)$ and a diagonal diffusion approximation from the residuals.
+
+5. **Example notebooks**:
+   * `ou_process_1d_*` notebooks compare SDMD, EDMD, and gEDMD on the one-dimensional Ornstein-Uhlenbeck process using neural, Fourier, and monomial dictionaries.
+   * `triple_well_2d_*` notebooks run two-dimensional triple-well experiments and method comparisons.
+   * `2d_stuart_landau_sdmd_test_1.ipynb` contains a Stuart-Landau example.
+
+6. **Experiment folders and data**:
+   * `data/` stores curated trajectory data used by the examples.
+   * `ou_extra/`, `triple_well_extra/`, and `stuart_landau_extra/` contain additional exploratory or archived experiment notebooks.
 
 
 ## References
