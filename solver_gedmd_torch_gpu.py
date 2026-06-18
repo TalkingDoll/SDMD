@@ -1,4 +1,5 @@
 import time
+from itertools import product
 import torch
 import torch.nn as nn
 import numpy as np
@@ -7,9 +8,7 @@ from numpy import arange
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-from functorch import vmap, jacrev
-
-from torch.func import jacrev
+from torch.func import vmap, jacrev
 import joblib
 from sde_coefficients_estimator import SDECoefficientEstimator
 
@@ -43,23 +42,25 @@ class EarlyStopping:
 
 
 class KoopmanNNTorch(nn.Module):
-    def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, **kwargs):
+    def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, poly_degree=1, **kwargs):
         super(KoopmanNNTorch, self).__init__()
         self.layer_sizes = layer_sizes
         self.n_psi_train = n_psi_train
+        self.poly_degree = poly_degree
+        self.poly_exponents = [
+            exponents
+            for degree in range(2, poly_degree + 1)
+            for exponents in product(range(degree + 1), repeat=input_size)
+            if sum(exponents) == degree
+        ]
 
         self.layers = nn.ModuleList()
-        bias = False
-        n_layers = len(layer_sizes)
-
-        # First layer
-        self.layers.append(nn.Linear(input_size, layer_sizes[0], bias=bias))
-        # Hidden layers
-        for ii in arange(len(layer_sizes) - 1):
-            self.layers.append(nn.Linear(layer_sizes[ii], layer_sizes[ii+1], bias=True))
-        # Activation and output layer
-        self.layers.append(nn.Tanh())
-        self.layers.append(nn.Linear(layer_sizes[-1], n_psi_train, bias=True))
+        prev_size = input_size
+        for ii, layer_size in enumerate(layer_sizes):
+            self.layers.append(nn.Linear(prev_size, layer_size, bias=(ii != 0)))
+            self.layers.append(nn.Tanh())
+            prev_size = layer_size
+        self.layers.append(nn.Linear(prev_size, n_psi_train, bias=True))
 
     def forward(self, x):
         # 1) If input is a 1D vector, add batch dimension
@@ -75,9 +76,20 @@ class KoopmanNNTorch(nn.Module):
         for layer in self.layers:
             x = layer(x)
 
-        # 4) Concatenate constant term, original input and network output
+        # 4) Concatenate constant term, optional polynomial features, and network output
         const_out = torch.ones_like(in_x[:, :1])
-        out = torch.cat([const_out, in_x, x], dim=1)
+        out_parts = [const_out, in_x]
+        if self.poly_exponents:
+            poly_terms = []
+            for exponents in self.poly_exponents:
+                term = torch.ones_like(in_x[:, :1])
+                for dim, power in enumerate(exponents):
+                    if power:
+                        term = term * in_x[:, dim:dim + 1].pow(power)
+                poly_terms.append(term)
+            out_parts.append(torch.cat(poly_terms, dim=1))
+        out_parts.append(x)
+        out = torch.cat(out_parts, dim=1)
 
         # 5) If batch dimension was added at the beginning, remove it
         if squeeze_back:
@@ -135,8 +147,8 @@ class KoopmanSolverTorch(object):
     '''
     def __init__(self, dic, target_dim, reg=0.0, checkpoint_file='example_koopman_net001.torch',
                  fnn_checkpoint_file='example_fnn001.torch', a_b_file=None,
-                 generator_batch_size=4, fnn_batch_size=32, delta_t=0.1,
-                 patience=7, min_delta=1e-4):
+                 generator_batch_size=64, fnn_batch_size=32, delta_t=0.1,
+                 patience=7, min_delta=1e-4, normalize_gram=False):
         self.dic = dic  # dictionary class (PsiNN)
         self.dic_func = dic.forward
         self.target_dim = target_dim
@@ -151,6 +163,7 @@ class KoopmanSolverTorch(object):
         self.a_b_file = a_b_file
         self.patience = patience
         self.min_delta = min_delta
+        self.normalize_gram = normalize_gram
 
     def separate_data(self, data):
         data_x = data[0]
@@ -239,7 +252,7 @@ class KoopmanSolverTorch(object):
         )
         
         # Estimate the coefficients
-        b_Xt, a_Xt = sde_estimator.estimate_coefficients2(X_t_1, X_t, delta_t)
+        b_Xt, a_Xt = sde_estimator.estimate_coefficients(X_t_1, X_t, delta_t)
         
         # Ensure a_Xt is a 3D tensor even in 1D state space
         if state_dim == 1 and len(a_Xt.shape) == 2:
@@ -287,23 +300,26 @@ class KoopmanSolverTorch(object):
             dPsi_X (Tensor): shape (M-1, F)
         """
         device = data_x.device
-        num_samples = data_x.shape[0]
-        num_features = self.dic(data_x[:1]).shape[1]  # F
-        batch_size = 64
-        num_batches = (num_samples + batch_size - 1) // batch_size
+        derivative_inputs = data_x[:-1]
+        b_Xt = b_Xt.to(device)
+        a_Xt = a_Xt.to(device)
+        num_samples = derivative_inputs.shape[0]
+        num_features = self.dic(derivative_inputs[:1]).shape[1]  # F
+        batch_size = self.generator_batch_size or 64
 
-        dPsi_X = torch.zeros(num_samples - 1, num_features, device=device, dtype=data_x.dtype)
+        dPsi_X = torch.zeros(num_samples, num_features, device=device, dtype=data_x.dtype)
         batch_offset = 0
 
-        for i, (batch_J, batch_H) in enumerate(self.get_derivatives(data_x, batch_size)):
+        for i, (batch_J, batch_H) in enumerate(self.get_derivatives(derivative_inputs, batch_size)):
             batch_size_actual = batch_J.shape[0]
-            end_idx = min(batch_offset + batch_size_actual, num_samples - 1)
+            end_idx = min(batch_offset + batch_size_actual, num_samples)
 
             batch_b = b_Xt[batch_offset:end_idx]
             batch_a = a_Xt[batch_offset:end_idx]
 
-            term1 = torch.einsum('mfd,md->mf', batch_J[:end_idx - batch_offset], batch_b)
-            term2 = 0.5 * torch.einsum('mfkl,mkl->mf', batch_H[:end_idx - batch_offset], batch_a)
+            batch_len = end_idx - batch_offset
+            term1 = torch.einsum('mfd,md->mf', batch_J[:batch_len], batch_b)
+            term2 = 0.5 * torch.einsum('mfkl,mkl->mf', batch_H[:batch_len], batch_a)
             dPsi_X[batch_offset:end_idx] = term1 + term2
 
             batch_offset += batch_size_actual
@@ -364,10 +380,14 @@ class KoopmanSolverTorch(object):
         
         # 5) Regularize
         I = torch.eye(G.shape[0], device=G.device, dtype=G.dtype)
-        G_reg = G + lambda_reg * I
         
         # 6) Compute RHS A = PsiX^T @ dPsi_X   (F×F)
         A = psi_x.T @ dPsi_X
+        if self.normalize_gram:
+            m = psi_x.shape[0]
+            G = G / m
+            A = A / m
+        G_reg = G + lambda_reg * I
 
         # 7) Solve G_reg · L_Psi = A via Cholesky (SPD solve)
         #    This is much faster and more stable than pinv:
@@ -421,8 +441,12 @@ class KoopmanSolverTorch(object):
             # 2. Least squares solution for L
             G = Psi_X.T @ Psi_X
             I = torch.eye(G.shape[0], device=G.device, dtype=G.dtype)
-            G_reg = G + lambda_reg * I
             A = Psi_X.T @ dPsi_X
+            if self.normalize_gram:
+                m = Psi_X.shape[0]
+                G = G / m
+                A = A / m
+            G_reg = G + lambda_reg * I
             L = torch.linalg.solve(G_reg, A)  # (F, F)
 
             # 3. loss = ||dPsi_X - L Psi_X||^2

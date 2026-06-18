@@ -1,4 +1,5 @@
 import time
+from itertools import product
 import torch
 import torch.nn as nn
 import numpy as np
@@ -7,9 +8,7 @@ from numpy import arange
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-from functorch import vmap, jacrev
-
-from torch.func import jacrev
+from torch.func import vmap, jacrev
 import joblib
 # from sde_coefficients_estimator import SDECoefficientEstimator
 
@@ -21,23 +20,25 @@ torch.set_default_dtype(torch.float64)
 
 
 class KoopmanNNTorch(nn.Module):
-    def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, **kwargs):
+    def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, poly_degree=1, **kwargs):
         super(KoopmanNNTorch, self).__init__()
         self.layer_sizes = layer_sizes
         self.n_psi_train = n_psi_train
+        self.poly_degree = poly_degree
+        self.poly_exponents = [
+            exponents
+            for degree in range(2, poly_degree + 1)
+            for exponents in product(range(degree + 1), repeat=input_size)
+            if sum(exponents) == degree
+        ]
         
         self.layers = nn.ModuleList()
-        bias = False
-        n_layers = len(layer_sizes)
-        
-        # First layer
-        self.layers.append(nn.Linear(input_size, layer_sizes[0], bias=bias))
-        # Hidden layers
-        for ii in arange(len(layer_sizes) - 1):
-            self.layers.append(nn.Linear(layer_sizes[ii], layer_sizes[ii+1], bias=True))
-        # Activation and output layer
-        self.layers.append(nn.Tanh())
-        self.layers.append(nn.Linear(layer_sizes[-1], n_psi_train, bias=True))
+        prev_size = input_size
+        for ii, layer_size in enumerate(layer_sizes):
+            self.layers.append(nn.Linear(prev_size, layer_size, bias=(ii != 0)))
+            self.layers.append(nn.Tanh())
+            prev_size = layer_size
+        self.layers.append(nn.Linear(prev_size, n_psi_train, bias=True))
     
     def forward(self, x):
         # 1) If input is a 1D vector, add batch dimension
@@ -53,9 +54,20 @@ class KoopmanNNTorch(nn.Module):
         for layer in self.layers:
             x = layer(x)
         
-        # 4) Concatenate constant term, original input and network output
+        # 4) Concatenate constant term, optional polynomial features, and network output
         const_out = torch.ones_like(in_x[:, :1])
-        out = torch.cat([const_out, in_x, x], dim=1)
+        out_parts = [const_out, in_x]
+        if self.poly_exponents:
+            poly_terms = []
+            for exponents in self.poly_exponents:
+                term = torch.ones_like(in_x[:, :1])
+                for dim, power in enumerate(exponents):
+                    if power:
+                        term = term * in_x[:, dim:dim + 1].pow(power)
+                poly_terms.append(term)
+            out_parts.append(torch.cat(poly_terms, dim=1))
+        out_parts.append(x)
+        out = torch.cat(out_parts, dim=1)
         
         # 5) If batch dimension was added at the beginning, remove it
         if squeeze_back:
@@ -110,7 +122,8 @@ class EDMDSolverTorch(object):
     '''
     Plain EDMD solver using a neural network dictionary.
     '''
-    def __init__(self, dic, target_dim, reg=0.0, checkpoint_file='edmd_koopman_net.torch', batch_size=32):
+    def __init__(self, dic, target_dim, reg=0.0, checkpoint_file='edmd_koopman_net.torch',
+                 batch_size=32, normalize_gram=False):
         self.dic = dic
         self.dic_func = dic.forward
         self.target_dim = target_dim
@@ -121,6 +134,7 @@ class EDMDSolverTorch(object):
         self.batch_size = batch_size
         self.koopman_model = None
         self.koopman_optimizer = None
+        self.normalize_gram = normalize_gram
 
     def separate_data(self, data):
         data_x = data[0]
@@ -146,8 +160,13 @@ class EDMDSolverTorch(object):
         self.Psi_Y = psi_y
         psi_xt = psi_x.T
         idmat = torch.eye(psi_x.shape[-1]).to(device)
-        xtx_inv = torch.linalg.pinv(reg * idmat + torch.matmul(psi_xt, psi_x))
+        xtx = torch.matmul(psi_xt, psi_x)
         xty = torch.matmul(psi_xt, psi_y)
+        if self.normalize_gram:
+            m = psi_x.shape[0]
+            xtx = xtx / m
+            xty = xty / m
+        xtx_inv = torch.linalg.pinv(reg * idmat + xtx)
         self.K_reg = torch.matmul(xtx_inv, xty)
         return self.K_reg
 
