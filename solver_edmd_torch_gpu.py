@@ -1,4 +1,5 @@
 import time
+from itertools import product
 import torch
 import torch.nn as nn
 import numpy as np
@@ -19,15 +20,22 @@ torch.set_default_dtype(torch.float64)
 
 
 class KoopmanNNTorch(nn.Module):
-    def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, **kwargs):
+    def __init__(self, input_size, layer_sizes=[64, 64], n_psi_train=22, poly_degree=1, **kwargs):
         super(KoopmanNNTorch, self).__init__()
         self.layer_sizes = layer_sizes
         self.n_psi_train = n_psi_train
+        self.poly_degree = poly_degree
+        self.poly_exponents = [
+            exponents
+            for degree in range(2, poly_degree + 1)
+            for exponents in product(range(degree + 1), repeat=input_size)
+            if sum(exponents) == degree
+        ]
         
         self.layers = nn.ModuleList()
         prev_size = input_size
-        for layer_size in layer_sizes:
-            self.layers.append(nn.Linear(prev_size, layer_size, bias=True))
+        for ii, layer_size in enumerate(layer_sizes):
+            self.layers.append(nn.Linear(prev_size, layer_size, bias=(ii != 0)))
             self.layers.append(nn.Tanh())
             prev_size = layer_size
         self.layers.append(nn.Linear(prev_size, n_psi_train, bias=True))
@@ -46,9 +54,20 @@ class KoopmanNNTorch(nn.Module):
         for layer in self.layers:
             x = layer(x)
         
-        # 4) Concatenate constant term, original state, and network output
+        # 4) Concatenate constant term, optional polynomial features, and network output
         const_out = torch.ones_like(in_x[:, :1])
-        out = torch.cat([const_out, in_x, x], dim=1)
+        out_parts = [const_out, in_x]
+        if self.poly_exponents:
+            poly_terms = []
+            for exponents in self.poly_exponents:
+                term = torch.ones_like(in_x[:, :1])
+                for dim, power in enumerate(exponents):
+                    if power:
+                        term = term * in_x[:, dim:dim + 1].pow(power)
+                poly_terms.append(term)
+            out_parts.append(torch.cat(poly_terms, dim=1))
+        out_parts.append(x)
+        out = torch.cat(out_parts, dim=1)
         
         # 5) If batch dimension was added at the beginning, remove it
         if squeeze_back:
