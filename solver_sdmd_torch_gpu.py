@@ -717,7 +717,7 @@ class KoopmanSolverTorch(object):
             
             with torch.no_grad():
                 # self.koopman_model.layer_K.weight.data = self.K
-                self.koopman_model.layer_K.weight.data.copy_(self.K) # self.K.T
+                self.koopman_model.layer_K.weight.data.copy_(self.K.T)
             self.koopman_model.layer_K.weight.requires_grad = False
 
             # steps (inner epochs) for training PsiNN, the number of inner epochs is given by epochs parameter below, here epochs= 4

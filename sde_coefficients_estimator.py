@@ -199,12 +199,14 @@ class SDECoefficientEstimator:
         X_t_1 = X_t_1.to(self.device)
         X_t = X_t.to(self.device)
         
-        # Predict next state (drift term)
+        # Predict next state and recover the drift term.
         with torch.no_grad():
-            b_Xt = self.fnn_model(X_t_1)
+            X_next_pred = self.fnn_model(X_t_1)
+
+        b_Xt = (X_next_pred - X_t_1) / delta_t
         
         # Calculate residuals
-        residuals = X_t - b_Xt
+        residuals = X_t - X_next_pred
         
         # Compute variance of residuals
         variance = torch.square(residuals)
@@ -241,12 +243,14 @@ class SDECoefficientEstimator:
         X_t_1 = X_t_1.to(self.device)
         X_t = X_t.to(self.device)
 
-        # Predict drift b(x)
+        # Predict next state and recover drift b(x).
         with torch.no_grad():
-            b_Xt = self.fnn_model(X_t_1)
+            X_next_pred = self.fnn_model(X_t_1)
+
+        b_Xt = (X_next_pred - X_t_1) / delta_t
 
         # Compute residuals and variance
-        residuals = X_t - b_Xt
+        residuals = X_t - X_next_pred
         variance = residuals.pow(2)
 
         # Compute σ = sqrt(variance / delta_t)
